@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Product, Order, PickupLocation, OrderStatus } from './cartStore';
 import { products as initialProducts, pickupLocations as initialLocations } from '@/data/mockData';
-
+import { useNotificationStore } from './notificationStore';
 interface AdminStore {
   products: Product[];
   orders: Order[];
@@ -85,19 +85,50 @@ export const useAdminStore = create<AdminStore>()(
       },
       
       updateOrderStatus: (orderId, status) => {
+        const order = get().orders.find(o => o.id === orderId);
         set((state) => ({
           orders: state.orders.map((o) =>
             o.id === orderId ? { ...o, status } : o
           ),
         }));
+        
+        // Add notification for status change
+        if (order) {
+          const statusMessages: Record<OrderStatus, { type: 'order_confirmed' | 'order_ready' | 'order_completed', title: string, message: string }> = {
+            'CREATED': { type: 'order_confirmed', title: 'New Order', message: `Order ${orderId} has been created` },
+            'CONFIRMED': { type: 'order_confirmed', title: 'Order Confirmed', message: `Order ${orderId} has been confirmed and is being prepared` },
+            'READY_FOR_PICKUP': { type: 'order_ready', title: 'Ready for Pickup', message: `Order ${orderId} is ready for customer pickup at ${order.pickupLocation.name}` },
+            'COMPLETED': { type: 'order_completed', title: 'Order Completed', message: `Order ${orderId} has been picked up. Revenue: $${order.total.toFixed(2)}` },
+            'CANCELLED': { type: 'order_cancelled' as any, title: 'Order Cancelled', message: `Order ${orderId} has been cancelled` },
+          };
+          
+          const notif = statusMessages[status];
+          useNotificationStore.getState().addNotification({
+            type: notif.type,
+            title: notif.title,
+            message: notif.message,
+            orderId,
+          });
+        }
       },
       
       cancelOrder: (orderId) => {
+        const order = get().orders.find(o => o.id === orderId);
         set((state) => ({
           orders: state.orders.map((o) =>
             o.id === orderId ? { ...o, status: 'CANCELLED' as OrderStatus } : o
           ),
         }));
+        
+        // Add cancellation notification
+        if (order) {
+          useNotificationStore.getState().addNotification({
+            type: 'order_cancelled',
+            title: 'Order Cancelled',
+            message: `Order ${orderId} has been cancelled. Lost revenue: $${order.total.toFixed(2)}`,
+            orderId,
+          });
+        }
       },
       
       addLocation: (location) => {
