@@ -6,7 +6,9 @@ import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/stores/cartStore';
 import { LocationMap, LocationList } from '@/components/LocationMap';
+import { PaymentSelector, PaymentMethod } from '@/components/PaymentSelector';
 import { pickupLocations } from '@/data/mockData';
+import { formatNPR } from '@/lib/currency';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -23,13 +25,19 @@ const Cart = () => {
     setSelectedLocation,
     placeOrder,
   } = useCartStore();
-  const [step, setStep] = useState<'cart' | 'location' | 'confirm'>('cart');
+  const [step, setStep] = useState<'cart' | 'location' | 'payment' | 'confirm'>('cart');
+  const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | null>(null);
 
   const handlePlaceOrder = () => {
+    if (!selectedPayment) {
+      toast.error('Please select a payment method');
+      return;
+    }
+    
     const order = placeOrder();
     if (order) {
       toast.success('Order placed successfully!', {
-        description: `Order ${order.id} confirmed`,
+        description: `Order ${order.id} confirmed via ${selectedPayment.toUpperCase()}`,
       });
       navigate('/orders');
     }
@@ -75,18 +83,18 @@ const Cart = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-center gap-4 mb-8"
+            className="flex items-center justify-center gap-2 sm:gap-4 mb-8"
           >
-            {['Cart', 'Location', 'Confirm'].map((label, index) => {
-              const stepNames = ['cart', 'location', 'confirm'] as const;
+            {['Cart', 'Location', 'Payment', 'Confirm'].map((label, index) => {
+              const stepNames = ['cart', 'location', 'payment', 'confirm'] as const;
               const currentStepIndex = stepNames.indexOf(step);
               const isActive = index <= currentStepIndex;
 
               return (
                 <div key={label} className="flex items-center">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 sm:gap-2">
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold ${
                         isActive
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-muted text-muted-foreground'
@@ -94,12 +102,12 @@ const Cart = () => {
                     >
                       {index + 1}
                     </div>
-                    <span className={`hidden sm:inline font-medium ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}>
+                    <span className={`hidden sm:inline font-medium text-sm ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}>
                       {label}
                     </span>
                   </div>
-                  {index < 2 && (
-                    <div className={`w-12 h-1 mx-2 rounded ${index < currentStepIndex ? 'bg-primary' : 'bg-muted'}`} />
+                  {index < 3 && (
+                    <div className={`w-6 sm:w-12 h-1 mx-1 sm:mx-2 rounded ${index < currentStepIndex ? 'bg-primary' : 'bg-muted'}`} />
                   )}
                 </div>
               );
@@ -139,7 +147,7 @@ const Cart = () => {
                     />
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-foreground">{item.product.name}</h3>
-                      <p className="text-primary font-bold">${item.product.price.toFixed(2)}</p>
+                      <p className="text-primary font-bold">{formatNPR(item.product.price)}</p>
                     </div>
                     <div className="flex items-center gap-2 bg-muted rounded-xl p-1">
                       <button
@@ -173,7 +181,7 @@ const Cart = () => {
                   <div className="space-y-3 mb-6">
                     <div className="flex justify-between text-muted-foreground">
                       <span>Subtotal</span>
-                      <span>${getTotal().toFixed(2)}</span>
+                      <span>{formatNPR(getTotal())}</span>
                     </div>
                     <div className="flex justify-between text-muted-foreground">
                       <span>Pickup Fee</span>
@@ -182,7 +190,7 @@ const Cart = () => {
                     <div className="h-px bg-border" />
                     <div className="flex justify-between text-lg font-bold">
                       <span>Total</span>
-                      <span className="text-primary">${getTotal().toFixed(2)}</span>
+                      <span className="text-primary">{formatNPR(getTotal())}</span>
                     </div>
                   </div>
                   <Button
@@ -229,14 +237,54 @@ const Cart = () => {
                   />
 
                   <Button
-                    onClick={() => setStep('confirm')}
+                    onClick={() => setStep('payment')}
                     disabled={!selectedLocation}
                     className="w-full btn-gradient-primary h-12 rounded-xl mt-6"
                   >
-                    Continue to Confirm
+                    Continue to Payment
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step: Payment */}
+          {step === 'payment' && (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="max-w-2xl mx-auto"
+            >
+              <div className="flex items-center gap-4 mb-6">
+                <Button variant="ghost" onClick={() => setStep('location')}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+                <h1 className="text-2xl font-bold text-foreground">Payment Method</h1>
+              </div>
+
+              <div className="card-elevated p-6 space-y-6">
+                <PaymentSelector
+                  selectedMethod={selectedPayment}
+                  onSelectMethod={setSelectedPayment}
+                />
+
+                <div className="h-px bg-border" />
+
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-bold text-foreground">Total to Pay</span>
+                  <span className="text-2xl font-bold text-primary">{formatNPR(getTotal())}</span>
+                </div>
+
+                <Button
+                  onClick={() => setStep('confirm')}
+                  disabled={!selectedPayment}
+                  className="w-full btn-gradient-primary h-12 rounded-xl"
+                >
+                  Review Order
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
               </div>
             </motion.div>
           )}
@@ -249,7 +297,7 @@ const Cart = () => {
               className="max-w-2xl mx-auto"
             >
               <div className="flex items-center gap-4 mb-6">
-                <Button variant="ghost" onClick={() => setStep('location')}>
+                <Button variant="ghost" onClick={() => setStep('payment')}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back
                 </Button>
@@ -273,7 +321,7 @@ const Cart = () => {
                           <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
                         </div>
                         <span className="font-semibold">
-                          ${(item.product.price * item.quantity).toFixed(2)}
+                          {formatNPR(item.product.price * item.quantity)}
                         </span>
                       </div>
                     ))}
@@ -297,17 +345,44 @@ const Cart = () => {
 
                 <div className="h-px bg-border" />
 
+                {/* Payment Method */}
+                <div>
+                  <h3 className="font-semibold text-foreground mb-3">Payment Method</h3>
+                  <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      selectedPayment === 'esewa' ? 'bg-green-500' :
+                      selectedPayment === 'khalti' ? 'bg-purple-500' : 'bg-blue-500'
+                    }`}>
+                      <span className="text-white text-lg">
+                        {selectedPayment === 'esewa' ? '🟢' :
+                         selectedPayment === 'khalti' ? '🟣' : '💳'}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground capitalize">
+                        {selectedPayment === 'stripe' ? 'Card Payment' : selectedPayment}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedPayment === 'esewa' ? 'eSewa wallet' :
+                         selectedPayment === 'khalti' ? 'Khalti wallet' : 'Visa, Mastercard, etc.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="h-px bg-border" />
+
                 {/* Total */}
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-bold text-foreground">Total</span>
-                  <span className="text-2xl font-bold text-primary">${getTotal().toFixed(2)}</span>
+                  <span className="text-2xl font-bold text-primary">{formatNPR(getTotal())}</span>
                 </div>
 
                 <Button
                   onClick={handlePlaceOrder}
                   className="w-full btn-gradient-secondary h-14 rounded-xl text-lg"
                 >
-                  Place Order
+                  Pay {formatNPR(getTotal())}
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </div>
