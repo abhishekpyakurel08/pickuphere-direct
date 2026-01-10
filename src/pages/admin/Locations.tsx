@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { toast } from 'sonner';
 import { PickupLocation } from '@/stores/cartStore';
 
-const LeafletMap = lazy(() => import('@/components/LeafletMapInner'));
+const AdminMapView = lazy(() => import('@/components/admin/AdminMapView'));
 
 export default function AdminLocations() {
   const { locations, orders, addLocation, updateLocation, deleteLocation } = useAdminStore();
@@ -119,7 +119,7 @@ export default function AdminLocations() {
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
         }>
-          <LeafletMap locations={locations} />
+          <AdminMapView locations={locations} />
         </Suspense>
       </motion.div>
 
