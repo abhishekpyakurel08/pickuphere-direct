@@ -6,7 +6,6 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { ProductCard } from '@/components/ProductCard';
 import { products, pickupLocations } from '@/data/mockData';
-import { LocationMap } from '@/components/LocationMap';
 
 const Index = () => {
   const featuredProducts = products.slice(0, 4);
@@ -190,17 +189,50 @@ const Index = () => {
             <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
               Pickup Locations
             </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-8">
               {pickupLocations.length} convenient locations across the city
             </p>
           </motion.div>
 
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {pickupLocations.slice(0, 3).map((location, index) => (
+              <motion.div
+                key={location.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="card-elevated p-6"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <MapPin className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-foreground mb-1">{location.name}</h3>
+                    <p className="text-sm text-muted-foreground mb-2">{location.address}</p>
+                    <div className="flex items-center gap-1 text-sm text-primary">
+                      <Clock className="w-3 h-3" />
+                      <span>{location.hours}</span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
+            className="text-center mt-8"
           >
-            <LocationMap locations={pickupLocations} height="400px" />
+            <Link to="/cart">
+              <Button className="btn-gradient-primary rounded-xl">
+                View All Locations in Cart
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
           </motion.div>
         </div>
       </section>
