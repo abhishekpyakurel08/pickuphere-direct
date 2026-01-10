@@ -8,6 +8,7 @@ import Products from "./pages/Products";
 import Cart from "./pages/Cart";
 import Orders from "./pages/Orders";
 import NotFound from "./pages/NotFound";
+import { AgeVerification } from "./components/AgeVerification";
 
 // Admin pages
 import { AdminLayout } from "./components/admin/AdminLayout";
@@ -23,6 +24,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner position="top-center" />
+      <AgeVerification />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
