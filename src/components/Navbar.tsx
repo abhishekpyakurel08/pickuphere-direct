@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, MapPin, Menu, X, Settings } from 'lucide-react';
+import { ShoppingCart,  Menu, X, Settings } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,13 +22,13 @@ export function Navbar() {
       <nav className="section-container">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
-              <MapPin className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold text-foreground">SelfDrop</span>
-          </Link>
-
+<Link to="/" className="flex items-center gap-2">
+  <img
+    src="/logo.png"
+    className="w-[clamp(80px,12vw,200px)] max-w-full h-auto object-contain transition-all duration-300"
+    alt="Logo"
+  />
+</Link>
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (

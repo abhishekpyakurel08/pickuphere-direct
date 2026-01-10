@@ -4,8 +4,65 @@ import { ArrowRight, MapPin, Clock, ShoppingBag, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
-import { ProductCard } from '@/components/ProductCard';
 import { products, pickupLocations } from '@/data/mockData';
+
+// AnimatedText component: word-by-word animation
+const AnimatedText = ({ text }: { text: string }) => {
+  return (
+    <motion.div
+      className="inline-flex flex-wrap"
+      initial="hidden"
+      animate="visible"
+      variants={{
+        hidden: {},
+        visible: { transition: { staggerChildren: 0.1 } },
+      }}
+    >
+      {text.split(' ').map((word, index) => (
+        <motion.span
+          key={index}
+          className="inline-block mr-1"
+          variants={{
+            hidden: { opacity: 0, y: 10 },
+            visible: { opacity: 1, y: 0 },
+          }}
+          transition={{ duration: 0.5 }}
+        >
+          {word}
+        </motion.span>
+      ))}
+    </motion.div>
+  );
+};
+
+// Animated Product Card with hover scale + shadow
+const AnimatedProductCard = ({ product, index }: any) => {
+  return (
+    <motion.div
+      className="bg-card rounded-2xl overflow-hidden shadow-md cursor-pointer"
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: index * 0.1, duration: 0.5 }}
+      whileHover={{
+        scale: 1.05,
+        boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
+        transition: { type: 'spring', stiffness: 300, damping: 20 },
+      }}
+    >
+      <img
+        src={product.image}
+        alt={product.name}
+        className="w-full h-48 object-cover"
+      />
+      <div className="p-4">
+        <h3 className="font-bold text-lg text-foreground">{product.name}</h3>
+        <p className="text-muted-foreground mt-1">{product.description}</p>
+        <p className="font-semibold text-primary mt-2">Rs {product.price}</p>
+      </div>
+    </motion.div>
+  );
+};
 
 const Index = () => {
   const featuredProducts = products.slice(0, 4);
@@ -28,14 +85,29 @@ const Index = () => {
                 <MapPin className="w-4 h-4" />
                 Self-pickup made simple
               </span>
-              <h1 className="hero-title text-foreground mb-6">
-                Order Online,{' '}
-                <span className="text-gradient-primary">Pick Up</span> Your Way
+
+              {/* Hero Title */}
+              <h1 className="hero-title text-foreground mb-6 text-4xl lg:text-5xl font-bold">
+                <AnimatedText text="Order Online, Pick Up Your Way" />
               </h1>
-              <p className="hero-subtitle mb-8">
+
+              {/* Hero Subtitle */}
+              <motion.p
+                className="hero-subtitle mb-8 text-lg text-muted-foreground max-w-xl"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6, duration: 0.6 }}
+              >
                 Premium spirits, fine wines, and tobacco products ready for pickup. Order ahead and collect at your convenience — no lines, no waiting.
-              </p>
-              <div className="flex flex-wrap gap-4">
+              </motion.p>
+
+              {/* Buttons */}
+              <motion.div
+                className="flex flex-wrap gap-4"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8, duration: 0.6 }}
+              >
                 <Link to="/products">
                   <Button className="btn-gradient-primary h-12 px-8 text-lg rounded-xl">
                     Browse Products
@@ -47,9 +119,10 @@ const Index = () => {
                     Track Order
                   </Button>
                 </Link>
-              </div>
+              </motion.div>
             </motion.div>
 
+            {/* Hero Image */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -64,12 +137,12 @@ const Index = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-foreground/40 to-transparent" />
               </div>
-              
+
               {/* Floating card */}
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 }}
+                transition={{ delay: 0.5, duration: 0.6 }}
                 className="absolute -bottom-6 -left-6 bg-card p-4 rounded-2xl shadow-elevated border border-border/50"
               >
                 <div className="flex items-center gap-3">
@@ -96,12 +169,22 @@ const Index = () => {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
+            <motion.h2
+              className="text-3xl lg:text-4xl font-bold text-foreground mb-4"
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
               How It Works
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            </motion.h2>
+            <motion.p
+              className="text-muted-foreground text-lg max-w-2xl mx-auto"
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
               Three simple steps to get your order
-            </p>
+            </motion.p>
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -171,7 +254,7 @@ const Index = () => {
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {featuredProducts.map((product, index) => (
-              <ProductCard key={product.id} product={product} index={index} />
+              <AnimatedProductCard key={product.id} product={product} index={index} />
             ))}
           </div>
         </div>
