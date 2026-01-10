@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { NotificationPanel } from './NotificationPanel';
 
 const navItems = [
   { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
@@ -46,12 +47,15 @@ export function AdminLayout() {
               <span className="font-bold text-foreground">Admin</span>
             </Link>
           )}
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg hover:bg-muted transition-colors"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <NotificationPanel />
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Navigation */}
@@ -85,14 +89,17 @@ export function AdminLayout() {
       </aside>
 
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border h-16 flex items-center px-4">
-        <button
-          onClick={() => setMobileOpen(true)}
-          className="p-2 rounded-lg hover:bg-muted"
-        >
-          <Menu className="w-6 h-6" />
-        </button>
-        <span className="ml-4 font-bold text-foreground">Admin Panel</span>
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border h-16 flex items-center justify-between px-4">
+        <div className="flex items-center">
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="p-2 rounded-lg hover:bg-muted"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+          <span className="ml-4 font-bold text-foreground">Admin Panel</span>
+        </div>
+        <NotificationPanel />
       </div>
 
       {/* Mobile Sidebar Overlay */}

@@ -33,7 +33,7 @@ const Index = () => {
                 <span className="text-gradient-primary">Pick Up</span> Your Way
               </h1>
               <p className="hero-subtitle mb-8">
-                Skip the delivery wait. Order fresh products from local vendors and pick them up at your convenience from our network of locations.
+                Premium spirits, fine wines, and tobacco products ready for pickup. Order ahead and collect at your convenience — no lines, no waiting.
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link to="/products">
@@ -58,8 +58,8 @@ const Index = () => {
             >
               <div className="relative rounded-3xl overflow-hidden shadow-2xl">
                 <img
-                  src="https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&h=600&fit=crop"
-                  alt="Fresh groceries"
+                  src="https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=800&h=600&fit=crop"
+                  alt="Premium spirits collection"
                   className="w-full h-[400px] lg:h-[500px] object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-foreground/40 to-transparent" />
@@ -109,17 +109,17 @@ const Index = () => {
               {
                 icon: ShoppingBag,
                 title: 'Browse & Order',
-                description: 'Choose from our selection of fresh products and add them to your cart.',
+                description: 'Choose from our selection of premium spirits, wines, and tobacco products.',
               },
               {
                 icon: MapPin,
                 title: 'Select Location',
-                description: 'Pick your nearest pickup point from our interactive map.',
+                description: 'Pick your nearest pickup point from our network of licensed stores.',
               },
               {
                 icon: Truck,
                 title: 'Pick Up',
-                description: 'Collect your order when ready. No waiting, no delivery fees.',
+                description: 'Show your ID, collect your order. No waiting, no delivery fees.',
               },
             ].map((step, index) => (
               <motion.div
@@ -158,7 +158,7 @@ const Index = () => {
                 Featured Products
               </h2>
               <p className="text-muted-foreground text-lg">
-                Fresh picks from local vendors
+                Premium selections for discerning tastes
               </p>
             </div>
             <Link to="/products">
