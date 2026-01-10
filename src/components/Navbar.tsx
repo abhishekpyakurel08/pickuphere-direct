@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, MapPin, Package, User, Menu, X } from 'lucide-react';
+import { ShoppingCart, MapPin, Menu, X, Settings } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -43,7 +43,16 @@ export function Navbar() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            {/* Admin Link */}
+            <Link
+              to="/admin"
+              className="hidden sm:flex p-2 rounded-xl hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              title="Admin Panel"
+            >
+              <Settings className="w-5 h-5" />
+            </Link>
+
             <Link
               to="/cart"
               className="relative p-2 rounded-xl hover:bg-muted transition-colors"
@@ -98,6 +107,14 @@ export function Navbar() {
                     {link.label}
                   </Link>
                 ))}
+                <Link
+                  to="/admin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-foreground hover:bg-muted"
+                >
+                  <Settings className="w-4 h-4" />
+                  Admin Panel
+                </Link>
               </div>
             </motion.div>
           )}
