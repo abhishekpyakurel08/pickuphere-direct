@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { PickupLocation } from '@/stores/cartStore';
-import { MapPin, Clock, Check } from 'lucide-react';
+import { MapPin, Clock, Check, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface LocationMapProps {
@@ -10,86 +10,22 @@ interface LocationMapProps {
   height?: string;
 }
 
-// Lazy load map component
-function LazyMap({ locations, selectedLocationId, onSelectLocation, height }: LocationMapProps) {
-  const [MapComponent, setMapComponent] = useState<React.ComponentType<any> | null>(null);
-
-  useEffect(() => {
-    // Dynamically import Leaflet components
-    Promise.all([
-      import('react-leaflet'),
-      import('leaflet')
-    ]).then(([reactLeaflet, L]) => {
-      const { MapContainer, TileLayer, Marker, Popup, useMap } = reactLeaflet;
-      
-      // Fix default marker icon issue
-      delete (L.default.Icon.Default.prototype as any)._getIconUrl;
-      L.default.Icon.Default.mergeOptions({
-        iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-        iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-      });
-
-      // Create the map component
-      const Map = () => {
-        const center: [number, number] = locations.length > 0 
-          ? [locations[0].lat, locations[0].lng]
-          : [40.7128, -74.006];
-
-        return (
-          <MapContainer
-            center={center}
-            zoom={12}
-            style={{ height: '100%', width: '100%' }}
-            scrollWheelZoom={true}
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            {locations.map((location) => (
-              <Marker
-                key={location.id}
-                position={[location.lat, location.lng]}
-                eventHandlers={{
-                  click: () => onSelectLocation?.(location),
-                }}
-              >
-                <Popup>
-                  <div className="min-w-[200px]">
-                    <h3 className="font-bold text-foreground mb-1">{location.name}</h3>
-                    <p className="text-sm text-muted-foreground mb-2">{location.address}</p>
-                    <div className="flex items-center gap-1 text-sm text-primary">
-                      <Clock className="w-4 h-4" />
-                      <span>{location.hours}</span>
-                    </div>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
-          </MapContainer>
-        );
-      };
-
-      setMapComponent(() => Map);
-    });
-  }, [locations, onSelectLocation]);
-
-  if (!MapComponent) {
-    return (
-      <div className="flex items-center justify-center h-full bg-muted/30 rounded-2xl">
-        <div className="text-center">
-          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3 animate-pulse">
-            <MapPin className="w-6 h-6 text-primary" />
-          </div>
-          <p className="text-muted-foreground">Loading map...</p>
+// Map loading placeholder
+function MapPlaceholder({ height }: { height: string }) {
+  return (
+    <div className="flex items-center justify-center bg-muted/30 rounded-2xl" style={{ height }}>
+      <div className="text-center">
+        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+          <Loader2 className="w-6 h-6 text-primary animate-spin" />
         </div>
+        <p className="text-muted-foreground">Loading map...</p>
       </div>
-    );
-  }
-
-  return <MapComponent />;
+    </div>
+  );
 }
+
+// Lazy loaded map component
+const LeafletMap = lazy(() => import('./LeafletMapInner'));
 
 export function LocationMap({
   locations,
@@ -99,12 +35,13 @@ export function LocationMap({
 }: LocationMapProps) {
   return (
     <div className="rounded-2xl overflow-hidden border border-border shadow-lg" style={{ height }}>
-      <LazyMap 
-        locations={locations}
-        selectedLocationId={selectedLocationId}
-        onSelectLocation={onSelectLocation}
-        height={height}
-      />
+      <Suspense fallback={<MapPlaceholder height={height} />}>
+        <LeafletMap 
+          locations={locations}
+          selectedLocationId={selectedLocationId}
+          onSelectLocation={onSelectLocation}
+        />
+      </Suspense>
     </div>
   );
 }
