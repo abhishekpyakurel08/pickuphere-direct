@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Plus, Minus, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { formatNPR } from '@/lib/currency';
 
 interface ProductCardProps {
   product: Product;
@@ -58,8 +59,8 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
         </p>
 
         <div className="flex items-center justify-between">
-          <span className="text-2xl font-bold text-primary">
-            ${product.price.toFixed(2)}
+          <span className="text-xl font-bold text-primary">
+            {formatNPR(product.price)}
           </span>
 
           {quantity === 0 ? (

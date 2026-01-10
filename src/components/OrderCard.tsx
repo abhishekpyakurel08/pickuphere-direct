@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Package, MapPin, Clock, Check, X, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/stores/cartStore';
+import { formatNPR } from '@/lib/currency';
 
 interface OrderCardProps {
   order: Order;
@@ -81,7 +82,7 @@ export function OrderCard({ order }: OrderCardProps) {
               <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
             </div>
             <span className="font-semibold text-foreground">
-              ${(item.product.price * item.quantity).toFixed(2)}
+              {formatNPR(item.product.price * item.quantity)}
             </span>
           </div>
         ))}
@@ -100,7 +101,7 @@ export function OrderCard({ order }: OrderCardProps) {
       <div className="flex items-center justify-between pt-4 border-t border-border">
         <div>
           <span className="text-sm text-muted-foreground">Total</span>
-          <p className="text-xl font-bold text-primary">${order.total.toFixed(2)}</p>
+          <p className="text-xl font-bold text-primary">{formatNPR(order.total)}</p>
         </div>
         {canCancel && (
           <Button
