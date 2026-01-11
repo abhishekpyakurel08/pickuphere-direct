@@ -10,6 +10,7 @@ import Products from "./pages/Products";
 import Cart from "./pages/Cart";
 import Orders from "./pages/Orders";
 import Auth from "./pages/Auth";
+import ProductDetails from "./pages/ProductDetails";
 import NotFound from "./pages/NotFound";
 import { AgeVerification } from "./components/AgeVerification";
 
@@ -34,6 +35,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/products" element={<Products />} />
+            <Route path="/product/:id" element={<ProductDetails />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/auth" element={<Auth />} />
             <Route

@@ -1,7 +1,8 @@
+import { Link } from 'react-router-dom';
 import { Product } from '@/stores/cartStore';
 import { useCartStore } from '@/stores/cartStore';
 import { motion } from 'framer-motion';
-import { Plus, Minus, ShoppingBag } from 'lucide-react';
+import { Plus, Minus, ShoppingBag, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { formatNPR } from '@/lib/currency';
@@ -29,25 +30,33 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
       className="card-product overflow-hidden group"
     >
       {/* Image */}
-      <div className="relative aspect-square overflow-hidden">
-        <img
-          src={product.image}
-          alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-        />
-        <div className="absolute top-3 left-3">
-          <span className="px-3 py-1 bg-background/90 backdrop-blur-sm rounded-full text-xs font-medium text-foreground">
-            {product.category}
-          </span>
-        </div>
-        {product.stock < 10 && (
-          <div className="absolute top-3 right-3">
-            <span className="px-3 py-1 bg-secondary/90 backdrop-blur-sm rounded-full text-xs font-medium text-secondary-foreground">
-              Only {product.stock} left
+      <Link to={`/product/${product.id}`}>
+        <div className="relative aspect-square overflow-hidden cursor-pointer">
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+          <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+            <span className="px-4 py-2 bg-background/90 backdrop-blur-sm rounded-full text-sm font-medium text-foreground flex items-center gap-2">
+              <Eye className="w-4 h-4" />
+              View Details
             </span>
           </div>
-        )}
-      </div>
+          <div className="absolute top-3 left-3">
+            <span className="px-3 py-1 bg-background/90 backdrop-blur-sm rounded-full text-xs font-medium text-foreground">
+              {product.category}
+            </span>
+          </div>
+          {product.stock < 10 && (
+            <div className="absolute top-3 right-3">
+              <span className="px-3 py-1 bg-secondary/90 backdrop-blur-sm rounded-full text-xs font-medium text-secondary-foreground">
+                Only {product.stock} left
+              </span>
+            </div>
+          )}
+        </div>
+      </Link>
 
       {/* Content */}
       <div className="p-4">
