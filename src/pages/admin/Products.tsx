@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { toast } from 'sonner';
 import { categories } from '@/data/mockData';
 import { Product } from '@/stores/cartStore';
+import { formatNPR } from '@/lib/currency';
 
 export default function AdminProducts() {
   const { products, addProduct, updateProduct, deleteProduct } = useAdminStore();
@@ -164,7 +165,7 @@ export default function AdminProducts() {
                     </span>
                   </td>
                   <td className="px-6 py-4 font-semibold text-primary">
-                    ${product.price.toFixed(2)}
+                    {formatNPR(product.price)}
                   </td>
                   <td className="px-6 py-4">
                     <span className={`font-medium ${product.stock < 10 ? 'text-destructive' : 'text-foreground'}`}>
@@ -218,9 +219,9 @@ export default function AdminProducts() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Price ($)
-                </label>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Price (Rs)
+              </label>
                 <input
                   type="number"
                   required
