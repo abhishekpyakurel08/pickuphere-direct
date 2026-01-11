@@ -1,10 +1,13 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart,  Menu, X, Settings } from 'lucide-react';
+import { ShoppingCart, Menu, X, Settings } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { UserMenu } from './UserMenu';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function Navbar() {
+  const { isAdmin } = useAuth();
   const location = useLocation();
   const itemCount = useCartStore((state) => state.getItemCount());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -43,15 +46,17 @@ export function Navbar() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-2">
-            {/* Admin Link */}
-            <Link
-              to="/admin"
-              className="hidden sm:flex p-2 rounded-xl hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-              title="Admin Panel"
-            >
-              <Settings className="w-5 h-5" />
-            </Link>
+          <div className="flex items-center gap-3">
+            {/* Admin Link - Only show if user is admin */}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className="hidden sm:flex p-2 rounded-xl hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                title="Admin Panel"
+              >
+                <Settings className="w-5 h-5" />
+              </Link>
+            )}
 
             <Link
               to="/cart"
@@ -68,6 +73,9 @@ export function Navbar() {
                 </motion.span>
               )}
             </Link>
+
+            {/* User Menu */}
+            <UserMenu />
 
             {/* Mobile menu button */}
             <button
@@ -107,14 +115,16 @@ export function Navbar() {
                     {link.label}
                   </Link>
                 ))}
-                <Link
-                  to="/admin"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-foreground hover:bg-muted"
-                >
-                  <Settings className="w-4 h-4" />
-                  Admin Panel
-                </Link>
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-foreground hover:bg-muted"
+                  >
+                    <Settings className="w-4 h-4" />
+                    Admin Panel
+                  </Link>
+                )}
               </div>
             </motion.div>
           )}

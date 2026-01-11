@@ -6,7 +6,8 @@ import {
   MapPin, 
   ArrowLeft,
   Menu,
-  X
+  X,
+  Boxes
 } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,6 +16,7 @@ import { NotificationPanel } from './NotificationPanel';
 const navItems = [
   { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/admin/products', icon: Package, label: 'Products' },
+  { to: '/admin/inventory', icon: Boxes, label: 'Inventory' },
   { to: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
   { to: '/admin/locations', icon: MapPin, label: 'Locations' },
 ];
