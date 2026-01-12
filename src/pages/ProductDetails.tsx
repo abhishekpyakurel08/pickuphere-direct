@@ -1,4 +1,5 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Plus, Minus, ShoppingBag, Package, Clock, MapPin, Star, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,9 @@ import { products } from '@/data/mockData';
 import { useCartStore } from '@/stores/cartStore';
 import { formatNPR } from '@/lib/currency';
 import { toast } from 'sonner';
+
+// Lazy load ProductReviews for better performance
+const ProductReviews = lazy(() => import('@/components/ProductReviews'));
 
 export default function ProductDetails() {
   const { id } = useParams<{ id: string }>();
@@ -220,6 +224,20 @@ export default function ProductDetails() {
                 </Link>
               )}
             </motion.div>
+          </div>
+        </section>
+
+        {/* Customer Reviews Section */}
+        <section className="py-12 border-t">
+          <div className="section-container">
+            <Suspense fallback={
+              <div className="animate-pulse space-y-4">
+                <div className="h-8 bg-muted rounded w-1/4" />
+                <div className="h-4 bg-muted rounded w-1/6" />
+              </div>
+            }>
+              <ProductReviews productId={product.id} productName={product.name} />
+            </Suspense>
           </div>
         </section>
 
