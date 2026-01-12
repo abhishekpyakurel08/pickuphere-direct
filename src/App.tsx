@@ -22,6 +22,9 @@ import AdminOrders from "./pages/admin/Orders";
 import AdminLocations from "./pages/admin/Locations";
 import AdminInventory from "./pages/admin/Inventory";
 
+// Vendor pages
+import VendorDashboard from "./pages/vendor/Dashboard";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -43,6 +46,16 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Orders />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Vendor Routes - Protected */}
+            <Route
+              path="/vendor"
+              element={
+                <ProtectedRoute>
+                  <VendorDashboard />
                 </ProtectedRoute>
               }
             />
