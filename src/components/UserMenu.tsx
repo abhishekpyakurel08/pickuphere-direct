@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { User, LogOut, Package, Settings } from 'lucide-react';
+import { User as UserIcon, LogOut, Package, Settings, ShoppingBag } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,21 +12,21 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export function UserMenu() {
-  const { user, signOut, isAdmin } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
 
   if (!user) {
     return (
       <Link to="/auth">
-        <Button variant="outline" className="rounded-xl">
-          <User className="w-4 h-4 mr-2" />
-          Sign In
+        <Button variant="outline" className="rounded-xl h-9 sm:h-10 px-3 sm:px-4">
+          <UserIcon className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Sign In</span>
         </Button>
       </Link>
     );
   }
 
-  const initials = user.email?.slice(0, 2).toUpperCase() || 'U';
-  const avatarUrl = user.user_metadata?.avatar_url;
+  const initials = user.name?.slice(0, 2).toUpperCase() || user.email?.slice(0, 2).toUpperCase() || 'U';
+  const avatarUrl = undefined; // No avatar in User interface yet
 
   return (
     <DropdownMenu>
@@ -43,7 +43,7 @@ export function UserMenu() {
       <DropdownMenuContent align="end" className="w-56">
         <div className="px-3 py-2">
           <p className="text-sm font-medium text-foreground truncate">
-            {user.user_metadata?.full_name || user.email}
+            {user.name || user.email}
           </p>
           <p className="text-xs text-muted-foreground truncate">{user.email}</p>
         </div>
@@ -54,6 +54,7 @@ export function UserMenu() {
             My Orders
           </Link>
         </DropdownMenuItem>
+
         {isAdmin && (
           <DropdownMenuItem asChild>
             <Link to="/admin" className="flex items-center gap-2 cursor-pointer">
@@ -64,13 +65,13 @@ export function UserMenu() {
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={() => signOut()}
+          onClick={() => logout()}
           className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
         >
           <LogOut className="w-4 h-4" />
           Sign Out
         </DropdownMenuItem>
       </DropdownMenuContent>
-    </DropdownMenu>
+    </DropdownMenu >
   );
 }

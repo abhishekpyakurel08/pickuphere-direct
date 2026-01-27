@@ -1,76 +1,237 @@
+// Import necessary React hooks and Google OAuth utilities
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { googleLogout, useGoogleLogin } from '@react-oauth/google';
+import api from '@/services/api';
 
-interface AuthContextType {
-  user: User | null;
-  session: Session | null;
-  isLoading: boolean;
-  signInWithGoogle: () => Promise<void>;
-  signOut: () => Promise<void>;
-  isAdmin: boolean;
+/**
+ * User Interface - Represents an authenticated user in the system
+ * 
+ * This interface defines the structure of user data returned from the backend
+ * after successful authentication.
+ */
+export interface User {
+  _id: string;                                    // Unique MongoDB user identifier
+  name: string;                                   // User's display name from Google
+  email: string;                                  // User's email address
+  role: 'user' | 'admin';                        // User's role for access control
+  token?: string;                                 // JWT token for authenticated requests
 }
 
+/**
+ * AuthContext Type Definition
+ * 
+ * Defines all authentication-related state and methods available through the context.
+ */
+interface AuthContextType {
+  user: User | null;
+  isLoading: boolean;
+  login: () => void;
+  signInWithGoogle: () => void;
+  loginWithPassword: (email: string, password: string) => Promise<{ requireOTP?: boolean; error?: string }>;
+  verifyOTP: (email: string, otp: string) => Promise<boolean>;
+  logout: () => void;
+  isAdmin: boolean;
+  authenticate: (credential: string) => Promise<boolean>;
+}
+
+// Create the authentication context with undefined default value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Hardcoded admin emails for demo purposes
-const ADMIN_EMAILS = [
-  'admin@selfdrop.com',
-  'demo@admin.com',
-];
-
+/**
+ * AuthProvider Component - Main Authentication Provider
+ * 
+ * This component wraps the application and provides authentication state and methods
+ * to all child components via React Context. It handles:
+ * - Automatic authentication on mount (checking for stored JWT)
+ * - Google OAuth integration
+ * - Persistent login via localStorage
+ * - Token refresh and validation
+ * 
+ * @param children - React components that need access to authentication context
+ */
 export function AuthProvider({ children }: { children: ReactNode }) {
+  // State: Current authenticated user (null if not logged in)
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+
+  // State: Loading indicator for initial auth check
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check if current user is admin
-  const isAdmin = user?.email ? ADMIN_EMAILS.includes(user.email) : false;
-
+  /**
+   * Effect: Check Authentication on Mount
+   * 
+   * When the app loads, check if there's a JWT token in localStorage.
+   * If found, validate it with the backend by fetching user data.
+   * This enables persistent login across browser sessions.
+   * 
+   * Flow:
+   * 1. Check localStorage for 'token'
+   * 2. If found, call /auth/me to validate and get user data
+   * 3. On success, set user state with fetched data
+   * 4. On failure, remove invalid token from storage
+   * 5. Set isLoading to false once check is complete
+   */
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setIsLoading(false);
+    const checkAuth = async () => {
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        try {
+          // Validate token and fetch user data from backend
+          const { data } = await api.get('/auth/me');
+          setUser({ ...data, token });
+        } catch (error: any) {
+          console.error("Auth check failed", error);
+          // If 401 but not expired, it's just invalid
+          if (error.response?.status === 401 && error.response?.data?.code !== 'TOKEN_EXPIRED') {
+            localStorage.removeItem('accessToken');
+          }
+        }
       }
-    );
-
-    // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
       setIsLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    };
+    checkAuth();
   }, []);
 
-  const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin,
-      },
-    });
-    if (error) throw error;
+  /**
+   * Google OAuth Login Handler
+   * 
+   * Uses the @react-oauth/google library to handle Google sign-in.
+   * This implements the OAuth 2.0 implicit flow with access tokens.
+   * 
+   * Flow:
+   * 1. User clicks "Sign in with Google"
+   * 2. Google OAuth popup/redirect opens
+   * 3. User authenticates with Google
+   * 4. Google returns access_token
+   * 5. Send access_token to backend /auth/google
+   * 6. Backend validates token with Google and creates/updates user
+   * 7. Backend returns JWT token and user data
+   * 8. Store JWT in localStorage and update user state
+   */
+  const login = useGoogleLogin({
+    onSuccess: async (codeResponse) => {
+      try {
+        console.log('Google login success, sending auth code to backend');
+
+        // Send Google authorization code to backend for verification
+        const { data } = await api.post('/auth/google', {
+          code: codeResponse.code
+        });
+
+        // Store JWT token for subsequent API requests
+        localStorage.setItem('accessToken', data.accessToken);
+
+        // Update user state with authenticated user data
+        setUser({ ...data.user, token: data.accessToken });
+      } catch (error) {
+        console.error("Login failed", error);
+        alert('Failed to sign in. Please check console for details.');
+      }
+    },
+    onError: error => {
+      console.error("Login Failed:", error);
+      alert('Google sign-in failed. Please try again.');
+    },
+    flow: 'auth-code'
+  });
+
+  const loginWithPassword = async (email: string, password: string) => {
+    try {
+      const { data } = await api.post('/auth/login', { email, password });
+
+      if (data.requireOTP) {
+        return { requireOTP: true };
+      }
+
+      localStorage.setItem('accessToken', data.accessToken);
+      setUser({ ...data.user, token: data.accessToken });
+      return { requireOTP: false };
+    } catch (error: any) {
+      return { error: error.response?.data?.message || 'Login failed' };
+    }
   };
 
-  const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+  const verifyOTP = async (email: string, otp: string) => {
+    try {
+      const { data } = await api.post('/auth/verify-otp', { email, otp });
+      localStorage.setItem('accessToken', data.accessToken);
+      setUser({ ...data.user, token: data.accessToken });
+      return true;
+    } catch (error) {
+      console.error("OTP verification failed", error);
+      return false;
+    }
   };
 
+  /**
+   * Alternative Authentication Method
+   * 
+   * Generic authenticate function that accepts a Google authorization code.
+   * This is an alternative to the access token flow and can be used
+   * for server-side OAuth implementations.
+   * 
+   * @param code - Google authorization code
+   * @returns Promise<boolean> - true if authentication successful, false otherwise
+   */
+  const authenticate = async (code: string) => {
+    try {
+      const { data } = await api.post('/auth/google', { code });
+      localStorage.setItem('accessToken', data.token); // Google returns it as 'token' sometimes in older calls
+      setUser({ ...data.user, token: data.token });
+      return true;
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
+  };
+
+  /**
+   * Logout Function
+   * 
+   * Completely logs out the user by:
+   * 1. Calling Google's logout to revoke OAuth session
+   * 2. Removing JWT token from localStorage
+   * 3. Clearing user state
+   * 4. Redirecting to home page
+   * 
+   * This ensures complete session cleanup on both client and Google's side.
+   */
+  const logout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch (e) {
+      console.error("Logout from server failed", e);
+    }
+    googleLogout();
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('token');
+    setUser(null);
+    window.location.href = '/';
+  };
+
+  /**
+   * Context Provider
+   * 
+   * Provides authentication state and methods to all child components.
+   * The value object includes:
+   * - user: Current user object or null
+   * - isLoading: Authentication check status
+   * - login/signInWithGoogle: Initiate Google OAuth flow
+   * - logout: Log out current user
+   * - isAdmin/isVendor: Role-based access helpers
+   * - authenticate: Alternative auth method
+   */
   return (
     <AuthContext.Provider
       value={{
         user,
-        session,
         isLoading,
-        signInWithGoogle,
-        signOut,
-        isAdmin,
+        login: login,
+        signInWithGoogle: login,
+        loginWithPassword,
+        verifyOTP,
+        logout,
+        isAdmin: user?.role === 'admin',
+        authenticate
       }}
     >
       {children}
@@ -78,6 +239,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * useAuth Hook - Access Authentication Context
+ * 
+ * Custom hook to access authentication state and methods from any component.
+ * Must be used within a component wrapped by AuthProvider.
+ * 
+ * @throws Error if used outside of AuthProvider
+ * @returns AuthContextType - Authentication context with user state and methods
+ * 
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const { user, signInWithGoogle, logout, isAdmin } = useAuth();
+ *   
+ *   if (!user) {
+ *     return <button onClick={signInWithGoogle}>Sign In</button>;
+ *   }
+ *   
+ *   return <div>Welcome {user.name}!</div>;
+ * }
+ * ```
+ */
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {

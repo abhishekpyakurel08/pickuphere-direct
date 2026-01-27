@@ -1,7 +1,8 @@
+import { SEO } from '@/components/SEO';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Plus, Minus, ShoppingBag, Package, Clock, MapPin, Star, Share2 } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, ShoppingBag, Package, Clock, MapPin, Star, Share2, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
@@ -9,6 +10,9 @@ import { products } from '@/data/mockData';
 import { useCartStore } from '@/stores/cartStore';
 import { formatNPR } from '@/lib/currency';
 import { toast } from 'sonner';
+import { ReviewSection } from '@/components/ReviewSection';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/services/api';
 
 // Lazy load ProductReviews for better performance
 const ProductReviews = lazy(() => import('@/components/ProductReviews'));
@@ -17,10 +21,24 @@ export default function ProductDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { items, addItem, updateQuantity } = useCartStore();
-  
+
+  const { data: reviews = [] } = useQuery({
+    queryKey: ['reviews', id],
+    queryFn: async () => {
+      const res = await api.get(`/reviews/${id}`);
+      return res.data;
+    }
+  });
+
   const product = products.find((p) => p.id === id);
   const cartItem = items.find((item) => item.product.id === id);
   const quantity = cartItem?.quantity || 0;
+
+  const averageRating = reviews.length > 0
+    ? (reviews.reduce((acc: any, r: any) => acc + r.rating, 0) / reviews.length).toFixed(1)
+    : "4.8";
+
+  const totalReviews = reviews.length > 0 ? reviews.length : 120;
 
   // Get related products (same category, excluding current)
   const relatedProducts = products
@@ -66,8 +84,36 @@ export default function ProductDetails() {
     }
   };
 
+  const productSchema = product ? {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": product.name,
+    "image": product.image,
+    "description": product.description,
+    "brand": {
+      "@type": "Brand",
+      "name": "Daru Hunting"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": `https://spiritliquor.com.np/product/${product.id}`,
+      "priceCurrency": "NPR",
+      "price": product.price,
+      "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      "itemCondition": "https://schema.org/NewCondition"
+    }
+  } : null;
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO
+        title={`${product.name} | Premium Spirits`}
+        description={`Get ${product.name} delivered across Kathmandu in 30 minutes. ${product.description}`}
+        image={product.image}
+        url={`https://spiritliquor.com.np/product/${product.id}`}
+        type="product"
+        schema={productSchema}
+      />
       <Navbar />
 
       <main className="flex-1">
@@ -131,10 +177,13 @@ export default function ProductDetails() {
                   {product.name}
                 </h1>
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => document.getElementById('review-form')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="flex items-center gap-1 hover:text-primary transition-colors"
+                  >
                     <Star className="w-4 h-4 fill-accent text-accent" />
-                    <span>4.8 (120 reviews)</span>
-                  </div>
+                    <span>{averageRating} ({totalReviews} reviews)</span>
+                  </button>
                   <span>•</span>
                   <span>{product.category}</span>
                 </div>
@@ -164,17 +213,17 @@ export default function ProductDetails() {
               {/* Features */}
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="flex items-center gap-3 p-4 rounded-xl bg-muted/50">
-                  <Clock className="w-5 h-5 text-primary" />
+                  <Truck className="w-5 h-5 text-primary" />
                   <div>
-                    <p className="font-medium text-foreground">Ready in 30 min</p>
-                    <p className="text-sm text-muted-foreground">After order confirmation</p>
+                    <p className="font-medium text-foreground">Fast Delivery</p>
+                    <p className="text-sm text-muted-foreground">Within 30 minutes</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-4 rounded-xl bg-muted/50">
                   <MapPin className="w-5 h-5 text-primary" />
                   <div>
-                    <p className="font-medium text-foreground">6 Pickup Locations</p>
-                    <p className="text-sm text-muted-foreground">Kathmandu Valley</p>
+                    <p className="font-medium text-foreground">Live Tracking</p>
+                    <p className="text-sm text-muted-foreground">Across Kathmandu</p>
                   </div>
                 </div>
               </div>
@@ -227,6 +276,7 @@ export default function ProductDetails() {
           </div>
         </section>
 
+<<<<<<< HEAD
         {/* Customer Reviews Section */}
         <section className="py-12 border-t">
           <div className="section-container">
@@ -239,6 +289,11 @@ export default function ProductDetails() {
               <ProductReviews productId={product.id} productName={product.name} />
             </Suspense>
           </div>
+=======
+        {/* Reviews Section */}
+        <section className="section-container py-12 border-t">
+          <ReviewSection productId={product.id} />
+>>>>>>> 27b4582 (Improved oAuth)
         </section>
 
         {/* Related Products */}

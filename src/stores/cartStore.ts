@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export interface Product {
-  id: string;
+  _id?: string;
+  id?: string;
   name: string;
   price: number;
   image: string;
@@ -16,39 +17,32 @@ export interface CartItem {
   quantity: number;
 }
 
-export interface PickupLocation {
-  id: string;
-  name: string;
-  address: string;
-  lat: number;
-  lng: number;
-  hours: string;
-}
-
-export type OrderStatus = 'CREATED' | 'CONFIRMED' | 'READY_FOR_PICKUP' | 'COMPLETED' | 'CANCELLED';
+export type OrderStatus = 'CREATED' | 'CONFIRMED' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'COMPLETED' | 'CANCELLED';
 
 export interface Order {
   id: string;
   items: CartItem[];
   total: number;
-  pickupLocation: PickupLocation;
+  orderType: 'DELIVERY';
+  deliveryLocation: { address: string; lat: number; lng: number };
   status: OrderStatus;
   createdAt: Date;
-  estimatedReadyTime?: string;
 }
 
 interface CartStore {
   items: CartItem[];
-  selectedLocation: PickupLocation | null;
   orders: Order[];
   addItem: (product: Product) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
-  setSelectedLocation: (location: PickupLocation | null) => void;
+  deliveryLocation: { address: string; lat: number; lng: number } | null;
+  deliveryCharge: number;
+  setDeliveryLocation: (location: { address: string; lat: number; lng: number } | null) => void;
+  setDeliveryCharge: (charge: number) => void;
   getTotal: () => number;
   getItemCount: () => number;
-  placeOrder: () => Order | null;
+  placeOrder: () => Promise<Order | null>;
   cancelOrder: (orderId: string) => void;
 }
 
@@ -56,16 +50,18 @@ export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
-      selectedLocation: null,
+      deliveryLocation: null,
+      deliveryCharge: 0,
       orders: [],
 
       addItem: (product) => {
         set((state) => {
-          const existingItem = state.items.find((item) => item.product.id === product.id);
+          const productId = product._id || product.id;
+          const existingItem = state.items.find((item) => (item.product._id || item.product.id) === productId);
           if (existingItem) {
             return {
               items: state.items.map((item) =>
-                item.product.id === product.id
+                (item.product._id || item.product.id) === productId
                   ? { ...item, quantity: item.quantity + 1 }
                   : item
               ),
@@ -77,7 +73,7 @@ export const useCartStore = create<CartStore>()(
 
       removeItem: (productId) => {
         set((state) => ({
-          items: state.items.filter((item) => item.product.id !== productId),
+          items: state.items.filter((item) => (item.product._id || item.product.id) !== productId),
         }));
       },
 
@@ -88,14 +84,16 @@ export const useCartStore = create<CartStore>()(
         }
         set((state) => ({
           items: state.items.map((item) =>
-            item.product.id === productId ? { ...item, quantity } : item
+            (item.product._id || item.product.id) === productId ? { ...item, quantity } : item
           ),
         }));
       },
 
-      clearCart: () => set({ items: [], selectedLocation: null }),
+      clearCart: () => set({ items: [], deliveryLocation: null, deliveryCharge: 0 }),
 
-      setSelectedLocation: (location) => set({ selectedLocation: location }),
+      setDeliveryLocation: (location) => set({ deliveryLocation: location }),
+
+      setDeliveryCharge: (charge: number) => set({ deliveryCharge: charge }),
 
       getTotal: () => {
         return get().items.reduce(
@@ -108,27 +106,36 @@ export const useCartStore = create<CartStore>()(
         return get().items.reduce((count, item) => count + item.quantity, 0);
       },
 
-      placeOrder: () => {
-        const { items, selectedLocation, getTotal } = get();
-        if (items.length === 0 || !selectedLocation) return null;
+      placeOrder: async () => {
+        const { items, deliveryLocation } = get();
+        if (items.length === 0 || !deliveryLocation) return null;
 
-        const order: Order = {
-          id: `ORD-${Date.now()}`,
-          items: [...items],
-          total: getTotal(),
-          pickupLocation: selectedLocation,
-          status: 'CREATED',
-          createdAt: new Date(),
-          estimatedReadyTime: '30-45 minutes',
-        };
+        try {
+          const { default: api } = await import('@/services/api');
 
-        set((state) => ({
-          orders: [order, ...state.orders],
-          items: [],
-          selectedLocation: null,
-        }));
+          const orderPayload = {
+            items: items.map(item => ({
+              product: item.product._id || item.product.id,
+              quantity: item.quantity
+            })),
+            deliveryLocation,
+          };
 
-        return order;
+          const response = await api.post('/orders', orderPayload);
+          const newOrders = Array.isArray(response.data) ? response.data : [response.data];
+
+          set((state) => ({
+            orders: [...newOrders, ...state.orders],
+            items: [],
+            deliveryLocation: null,
+            deliveryCharge: 0,
+          }));
+
+          return newOrders[0];
+        } catch (error) {
+          console.error("Failed to place order", error);
+          return null;
+        }
       },
 
       cancelOrder: (orderId) => {

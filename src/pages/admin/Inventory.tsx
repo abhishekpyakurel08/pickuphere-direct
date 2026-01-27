@@ -1,14 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Package, AlertTriangle, TrendingUp, TrendingDown, Search, Filter } from 'lucide-react';
+import { Package, AlertTriangle, TrendingUp, TrendingDown, Search, Filter, Plus } from 'lucide-react';
 import { useAdminStore } from '@/stores/adminStore';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { formatNPR } from '@/lib/currency';
 
 export default function AdminInventory() {
-  const { products, updateProduct } = useAdminStore();
+  const { products, fetchProducts, updateProduct, addProduct, users, fetchUsers } = useAdminStore();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'low' | 'out'>('all');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    price: '',
+    category: '',
+    stock: '',
+    description: '',
+    image: '',
+  });
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   const filteredProducts = products.filter((p) => {
     const matchesSearch =
@@ -33,15 +47,117 @@ export default function AdminInventory() {
     }
   };
 
+  const handleAddProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await addProduct({
+      ...formData,
+      price: parseFloat(formData.price),
+      stock: parseInt(formData.stock),
+      approved: true
+    });
+    setIsDialogOpen(false);
+    setFormData({ name: '', price: '', category: '', stock: '', description: '', image: '' });
+  };
+
   return (
     <div className="p-6 lg:p-8 space-y-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
       >
-        <h1 className="text-3xl font-bold text-foreground mb-2">Inventory Management</h1>
-        <p className="text-muted-foreground">Track and manage your product stock levels</p>
+        <div>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Inventory Management</h1>
+          <p className="text-muted-foreground">Track and manage your product stock levels</p>
+        </div>
+
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="btn-gradient-primary rounded-xl">
+              <Plus className="w-5 h-5 mr-2" />
+              Add Product
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Add New Product</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleAddProduct} className="grid grid-cols-2 gap-4 mt-4">
+              <div className="col-span-2">
+                <label className="text-sm font-medium mb-1 block">Product Name</label>
+                <input
+                  required
+                  className="input-field"
+                  value={formData.name}
+                  onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="e.g. Premium Whiskey"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Category</label>
+                <input
+                  required
+                  className="input-field"
+                  value={formData.category}
+                  onChange={e => setFormData({ ...formData, category: e.target.value })}
+                  placeholder="e.g. Whiskey"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Price (Rs)</label>
+                <input
+                  required
+                  type="number"
+                  className="input-field"
+                  value={formData.price}
+                  onChange={e => setFormData({ ...formData, price: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Initial Stock</label>
+                <input
+                  required
+                  type="number"
+                  className="input-field"
+                  value={formData.stock}
+                  onChange={e => setFormData({ ...formData, stock: e.target.value })}
+                  placeholder="0"
+                />
+              </div>
+
+              <div className="col-span-2">
+                <label className="text-sm font-medium mb-1 block">Image URL</label>
+                <input
+                  required
+                  className="input-field"
+                  value={formData.image}
+                  onChange={e => setFormData({ ...formData, image: e.target.value })}
+                  placeholder="https://..."
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="text-sm font-medium mb-1 block">Description</label>
+                <textarea
+                  required
+                  className="input-field min-h-[100px]"
+                  value={formData.description}
+                  onChange={e => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Product description..."
+                />
+              </div>
+              <div className="col-span-2 flex gap-3 mt-4">
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
+                  Cancel
+                </Button>
+                <Button type="submit" className="flex-1 btn-gradient-primary">
+                  Save Product
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </motion.div>
 
       {/* Stats Cards */}
@@ -173,13 +289,12 @@ export default function AdminInventory() {
                   </td>
                   <td className="px-6 py-4">
                     <span
-                      className={`font-medium ${
-                        product.stock === 0
-                          ? 'text-destructive'
-                          : product.stock <= 20
+                      className={`font-medium ${product.stock === 0
+                        ? 'text-destructive'
+                        : product.stock <= 20
                           ? 'text-warning'
                           : 'text-foreground'
-                      }`}
+                        }`}
                     >
                       {product.stock}
                     </span>

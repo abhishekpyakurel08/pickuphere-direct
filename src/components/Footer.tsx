@@ -7,16 +7,18 @@ export function Footer() {
       <div className="section-container py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand + Tagline */}
-          <div className="md:col-span-2 flex flex-col md:flex-row md:items-center md:gap-8 mb-4">
-            <Link to="/" className="inline-block w-full md:w-auto">
-              <img
-                src="/logo.png" // Ensure this is in public/logo.png
-                alt="Spirit Liquor Logo"
-                className="w-full max-w-[300px] md:max-w-[350px] lg:max-w-[400px] h-auto object-contain transition-all duration-300"
-              />
+          <div className="md:col-span-2 flex flex-col items-start gap-4 mb-4">
+            <Link to="/" className="inline-block group">
+              <div className="bg-background/10 p-2 rounded-2xl backdrop-blur-sm transition-all duration-500 group-hover:bg-background/20">
+                <img
+                  src="/logo.png"
+                  alt="Daru Hunting"
+                  className="w-48 md:w-56 lg:w-64 h-auto object-contain"
+                />
+              </div>
             </Link>
-            <p className="text-background/70 max-w-sm mt-3 md:mt-0">
-              Order online, pick up yourself. Fresh products from local vendors, ready when you are.
+            <p className="text-background/70 max-w-sm mt-3 leading-relaxed">
+              The hunt for elite spirits ends at your door. Certified premium selection delivered across Kathmandu Valley within 30 minutes.
             </p>
           </div>
 
@@ -57,7 +59,7 @@ export function Footer() {
             <ul className="space-y-3">
               <li className="flex items-center gap-2 text-background/70">
                 <Mail className="w-4 h-4" />
-                <span>drinkly@gmail.com</span>
+                <span>service@spiritliquor.com.np</span>
               </li>
               <li className="flex items-center gap-2 text-background/70">
                 <Phone className="w-4 h-4" />
@@ -69,7 +71,7 @@ export function Footer() {
 
         {/* Bottom Copyright */}
         <div className="border-t border-background/10 mt-8 pt-8 text-center text-background/50 text-sm">
-          <p>&copy; {new Date().getFullYear()} Spirit Liquor. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Daru Hunting. All rights reserved.</p>
         </div>
       </div>
     </footer>

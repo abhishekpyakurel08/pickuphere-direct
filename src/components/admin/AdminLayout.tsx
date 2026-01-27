@@ -1,13 +1,15 @@
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Package, 
-  ShoppingCart, 
-  MapPin, 
+import {
+  LayoutDashboard,
+  Package,
+  ShoppingCart,
+  TrendingUp,
+  ShieldCheck,
   ArrowLeft,
   Menu,
   X,
-  Boxes
+  Boxes,
+  Users,
 } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,7 +20,8 @@ const navItems = [
   { to: '/admin/products', icon: Package, label: 'Products' },
   { to: '/admin/inventory', icon: Boxes, label: 'Inventory' },
   { to: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
-  { to: '/admin/locations', icon: MapPin, label: 'Locations' },
+  { to: '/admin/financials', icon: TrendingUp, label: 'Financials' },
+  { to: '/admin/users', icon: Users, label: 'Users' },
 ];
 
 export function AdminLayout() {
@@ -35,18 +38,20 @@ export function AdminLayout() {
     <div className="min-h-screen bg-muted/30 flex">
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden lg:flex flex-col bg-card border-r border-border transition-all duration-300 ${
-          sidebarOpen ? 'w-64' : 'w-20'
-        }`}
+        className={`hidden lg:flex flex-col bg-card border-r border-border transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-20'
+          }`}
       >
         {/* Header */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-border">
           {sidebarOpen && (
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <MapPin className="w-4 h-4 text-primary-foreground" />
+            <Link to="/" className="flex items-center gap-3 group">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border border-primary/20 transition-all duration-300 group-hover:scale-110">
+                <img src="/logo.png" className="w-full h-full object-cover" alt="Logo" />
               </div>
-              <span className="font-bold text-foreground">Admin</span>
+              <div className="flex flex-col leading-tight">
+                <span className="font-bold text-foreground text-sm uppercase tracking-wider">Daru</span>
+                <span className="text-[10px] text-primary font-bold">ADMIN HUB</span>
+              </div>
             </Link>
           )}
           <div className="flex items-center gap-2">
@@ -66,11 +71,10 @@ export function AdminLayout() {
             <Link
               key={item.to}
               to={item.to}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                isActive(item.to, item.end)
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              }`}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive(item.to, item.end)
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                }`}
             >
               <item.icon className="w-5 h-5 flex-shrink-0" />
               {sidebarOpen && <span className="font-medium">{item.label}</span>}
@@ -136,11 +140,10 @@ export function AdminLayout() {
                     key={item.to}
                     to={item.to}
                     onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                      isActive(item.to, item.end)
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                    }`}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive(item.to, item.end)
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                      }`}
                   >
                     <item.icon className="w-5 h-5" />
                     <span className="font-medium">{item.label}</span>

@@ -1,4 +1,4 @@
-import { Product, PickupLocation } from '@/stores/cartStore';
+import { Product } from '@/stores/cartStore';
 
 export const products: Product[] = [
   // Nepali Local Products
@@ -84,6 +84,43 @@ export const products: Product[] = [
     category: 'Whiskey',
     stock: 35,
   },
+  // Snacks
+  {
+    id: '17',
+    name: 'Spicy Peanuts (Large)',
+    price: 150,
+    image: 'https://images.unsplash.com/photo-1599599811283-2dc376483569?q=80&w=600',
+    description: 'Freshly roasted spicy peanuts. Perfect companion for your drinks.',
+    category: 'Snacks',
+    stock: 200,
+  },
+  {
+    id: '18',
+    name: 'Lays Magic Masala',
+    price: 60,
+    image: 'https://m.media-amazon.com/images/I/71YyLqgLpEL.jpg',
+    description: 'Classic Indian style masala chips.',
+    category: 'Snacks',
+    stock: 150,
+  },
+  {
+    id: '19',
+    name: 'Buff Sukuti (Jerky)',
+    price: 450,
+    image: 'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=600',
+    description: 'Authentic Nepali dried buffalo meat. Spiced and flavorful.',
+    category: 'Snacks',
+    stock: 45,
+  },
+  {
+    id: '20',
+    name: 'Roasted Cashews',
+    price: 1200,
+    image: 'https://images.unsplash.com/photo-1623910609315-7798305c484f?q=80&w=600',
+    description: 'Premium salted and roasted cashews.',
+    category: 'Snacks',
+    stock: 30,
+  },
   // Vodka
   {
     id: '10',
@@ -153,55 +190,4 @@ export const products: Product[] = [
   },
 ];
 
-export const pickupLocations: PickupLocation[] = [
-  {
-    id: 'loc-1',
-    name: 'Kathmandu Central Store',
-    address: 'New Road, Kathmandu 44600',
-    lat: 27.7172,
-    lng: 85.3240,
-    hours: '10AM - 9PM',
-  },
-  {
-    id: 'loc-2',
-    name: 'Thamel Spirits & More',
-    address: 'Thamel Marg, Kathmandu 44600',
-    lat: 27.7150,
-    lng: 85.3123,
-    hours: '9AM - 10PM',
-  },
-  {
-    id: 'loc-3',
-    name: 'Lalitpur City Store',
-    address: 'Pulchowk, Lalitpur 44700',
-    lat: 27.6788,
-    lng: 85.3188,
-    hours: '10AM - 8PM',
-  },
-  {
-    id: 'loc-4',
-    name: 'Patan Durbar Square Outlet',
-    address: 'Mangal Bazaar, Lalitpur 44700',
-    lat: 27.6727,
-    lng: 85.3253,
-    hours: '9AM - 9PM',
-  },
-  {
-    id: 'loc-5',
-    name: 'Bhaktapur Heritage Store',
-    address: 'Durbar Square, Bhaktapur 44800',
-    lat: 27.6710,
-    lng: 85.4298,
-    hours: '10AM - 8PM',
-  },
-  {
-    id: 'loc-6',
-    name: 'Suryabinayak Corner',
-    address: 'Suryabinayak, Bhaktapur 44800',
-    lat: 27.6620,
-    lng: 85.4180,
-    hours: '9AM - 9PM',
-  },
-];
-
-export const categories = ['All', 'Whiskey', 'Vodka', 'Rum', 'Beer', 'Wine', 'Cigarettes'];
+export const categories = ['All', 'Whiskey', 'Vodka', 'Rum', 'Beer', 'Wine', 'Cigarettes', 'Snacks'];

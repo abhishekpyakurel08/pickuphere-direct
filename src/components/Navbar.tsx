@@ -25,13 +25,19 @@ export function Navbar() {
       <nav className="section-container">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-<Link to="/" className="flex items-center gap-2">
-  <img
-    src="/logo.png"
-    className="w-[clamp(80px,12vw,200px)] max-w-full h-auto object-contain transition-all duration-300"
-    alt="Logo"
-  />
-</Link>
+          <Link to="/" className="flex items-center gap-2 group shrink-0">
+            <div className="relative overflow-hidden transition-all duration-500 group-hover:scale-105 rounded-full border-2 border-primary/20 p-0.5 bg-background shadow-sm">
+              <img
+                src="/logo.png"
+                className="h-10 w-10 md:h-12 md:w-12 lg:h-14 lg:w-14 object-cover rounded-full"
+                alt="Daru Hunting Logo"
+              />
+            </div>
+            <div className="hidden lg:flex flex-col leading-none">
+              <span className="text-xl font-black tracking-tighter text-foreground">DARU</span>
+              <span className="text-[10px] font-bold tracking-[0.2em] text-primary">HUNTING</span>
+            </div>
+          </Link>
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
@@ -46,7 +52,7 @@ export function Navbar() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 sm:gap-3">
             {/* Admin Link - Only show if user is admin */}
             {isAdmin && (
               <Link
@@ -62,12 +68,12 @@ export function Navbar() {
               to="/cart"
               className="relative p-2 rounded-xl hover:bg-muted transition-colors"
             >
-              <ShoppingCart className="w-6 h-6 text-foreground" />
+              <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
               {itemCount > 0 && (
                 <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute -top-1 -right-1 w-5 h-5 bg-secondary text-secondary-foreground text-xs font-bold rounded-full flex items-center justify-center"
+                  className="absolute top-0 right-0 w-4 h-4 sm:w-5 sm:h-5 bg-secondary text-secondary-foreground text-[10px] sm:text-xs font-bold rounded-full flex items-center justify-center translate-x-1 -translate-y-1"
                 >
                   {itemCount}
                 </motion.span>
@@ -106,11 +112,10 @@ export function Navbar() {
                     key={link.to}
                     to={link.to}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`block px-4 py-2 rounded-lg ${
-                      isActive(link.to)
-                        ? 'bg-primary/10 text-primary font-semibold'
-                        : 'text-foreground hover:bg-muted'
-                    }`}
+                    className={`block px-4 py-2 rounded-lg ${isActive(link.to)
+                      ? 'bg-primary/10 text-primary font-semibold'
+                      : 'text-foreground hover:bg-muted'
+                      }`}
                   >
                     {link.label}
                   </Link>

@@ -23,15 +23,15 @@ function getNotificationIcon(type: Notification['type']) {
 
 export function NotificationPanel() {
   const [isOpen, setIsOpen] = useState(false);
-  const { 
-    notifications, 
-    markAsRead, 
-    markAllAsRead, 
-    clearNotification, 
+  const {
+    notifications,
+    markAsRead,
+    markAllAsRead,
+    clearNotification,
     clearAll,
-    getUnreadCount 
+    getUnreadCount
   } = useNotificationStore();
-  
+
   const unreadCount = getUnreadCount();
 
   return (
@@ -64,7 +64,7 @@ export function NotificationPanel() {
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-card border border-border rounded-2xl shadow-xl z-50 overflow-hidden"
+              className="absolute -right-2 md:right-0 top-full mt-3 w-[calc(100vw-32px)] max-w-sm bg-card border border-border rounded-[24px] shadow-2xl z-50 overflow-hidden"
             >
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
@@ -107,9 +107,8 @@ export function NotificationPanel() {
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 20 }}
-                      className={`p-4 border-b border-border hover:bg-muted/30 transition-colors ${
-                        !notification.read ? 'bg-primary/5' : ''
-                      }`}
+                      className={`p-4 border-b border-border hover:bg-muted/30 transition-colors ${!notification.read ? 'bg-primary/5' : ''
+                        }`}
                       onClick={() => markAsRead(notification.id)}
                     >
                       <div className="flex gap-3">

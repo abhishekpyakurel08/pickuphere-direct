@@ -49,22 +49,26 @@ export function AgeVerification() {
           {!denied ? (
             <>
               {/* Header */}
-              <div className="bg-gradient-to-br from-primary to-primary/80 p-8 text-center">
-                <div className="w-20 h-20 rounded-full bg-primary-foreground/20 flex items-center justify-center mx-auto mb-4">
-                  <ShieldCheck className="w-10 h-10 text-primary-foreground" />
+              <div className="bg-gradient-to-br from-primary to-primary/80 p-8 text-center text-primary-foreground">
+                <div className="w-24 h-24 bg-white/20 backdrop-blur-md rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg rotate-3 overflow-hidden">
+                  <img src="/logo.png" className="w-full h-full object-cover" alt="Daru Hunting" />
                 </div>
-                <h2 className="text-2xl font-bold text-primary-foreground mb-2">
-                  Age Verification Required
+                <h2 className="text-2xl font-bold mb-2">
+                  Daru Hunting
                 </h2>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/20 text-[10px] font-bold tracking-widest uppercase mb-4">
+                  <ShieldCheck className="w-3 h-3" />
+                  Age Verification required
+                </div>
                 <p className="text-primary-foreground/80 text-sm">
-                  This website contains age-restricted products
+                  The hunt for elite spirits is for adults only.
                 </p>
               </div>
 
               {/* Content */}
               <div className="p-8">
                 <p className="text-center text-muted-foreground mb-6">
-                  You must be <span className="font-bold text-foreground">21 years or older</span> to enter this site. 
+                  You must be <span className="font-bold text-foreground">21 years or older</span> to enter this site.
                   By clicking "I am 21+" you confirm that you are of legal age to purchase alcohol and tobacco products.
                 </p>
 
@@ -100,7 +104,7 @@ export function AgeVerification() {
                   Access Denied
                 </h2>
                 <p className="text-muted-foreground mb-6">
-                  Sorry, you must be 21 years or older to access this website. 
+                  Sorry, you must be 21 years or older to access this website.
                   Please visit us again when you meet the age requirement.
                 </p>
                 <Button

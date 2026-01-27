@@ -1,43 +1,123 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Trash2, ArrowRight, ArrowLeft, MapPin } from 'lucide-react';
+import { ShoppingBag, Trash2, ArrowRight, ArrowLeft, MapPin, Truck } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/stores/cartStore';
-import { LocationMap, LocationList } from '@/components/LocationMap';
+import { LocationPicker } from '@/components/LocationPicker';
 import { PaymentSelector, PaymentMethod } from '@/components/PaymentSelector';
-import { pickupLocations } from '@/data/mockData';
 import { formatNPR } from '@/lib/currency';
-import { useState } from 'react';
+import api from '@/services/api';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Cart = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user, isLoading: authLoading } = useAuth();
   const {
     items,
     updateQuantity,
     removeItem,
     clearCart,
     getTotal,
-    selectedLocation,
-    setSelectedLocation,
     placeOrder,
+    deliveryLocation,
+    setDeliveryLocation,
+    deliveryCharge,
+    setDeliveryCharge,
   } = useCartStore();
   const [step, setStep] = useState<'cart' | 'location' | 'payment' | 'confirm'>('cart');
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | null>(null);
 
-  const handlePlaceOrder = () => {
+  // Auto-select location on mount if not set
+  useEffect(() => {
+    if (!deliveryLocation && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          // Trigger reverse geocoding via LocationPicker logic indirectly or set simple coords
+          // We set coords, and LocationPicker will handle the address fetch when it mounts or we can do it here
+          setDeliveryLocation({
+            address: "Locating...",
+            lat: latitude,
+            lng: longitude
+          });
+        },
+        (error) => {
+          console.warn("Geolocation permission denied or failed", error);
+        }
+      );
+    }
+  }, []);
+
+  // When user returns from authentication, restore their progress
+  useEffect(() => {
+    if (user && !authLoading && items.length > 0 && deliveryLocation) {
+      const wasRedirectedForAuth = location.state?.from?.pathname === '/cart';
+      if (wasRedirectedForAuth && step === 'cart') {
+        setStep('payment');
+      }
+    }
+  }, [user, authLoading, items.length, deliveryLocation, location.state, step]);
+
+  // Fetch delivery estimate when delivery location changes
+  useEffect(() => {
+    if (deliveryLocation?.lat && deliveryLocation?.lng) {
+      const fetchEstimate = async () => {
+        try {
+          const adminRes = await api.get('/admin/users');
+          const admin = adminRes.data.find((u: any) => u.role === 'admin');
+
+          if (admin) {
+            const res = await api.post('/orders/delivery-estimate', {
+              vendorId: admin._id,
+              deliveryLocation
+            });
+
+            const subtotal = getTotal();
+            if (subtotal >= 2000) {
+              setDeliveryCharge(0);
+            } else {
+              setDeliveryCharge(res.data.deliveryCharge);
+            }
+          } else {
+            setDeliveryCharge(100);
+          }
+        } catch (e) {
+          console.error("Failed to fetch delivery estimate", e);
+          setDeliveryCharge(150);
+        }
+      };
+      fetchEstimate();
+    } else {
+      setDeliveryCharge(0);
+    }
+  }, [deliveryLocation, setDeliveryCharge, items]); // Added items to recalculate if cart changes
+
+  // Check authentication when trying to access payment or confirm step
+  useEffect(() => {
+    if (!authLoading && (step === 'payment' || step === 'confirm')) {
+      if (!user) {
+        toast.error('Please sign in to continue with payment');
+        navigate('/auth', { state: { from: location, resumeStep: step } });
+      }
+    }
+  }, [step, user, authLoading, navigate, location]);
+
+  const handlePlaceOrder = async () => {
     if (!selectedPayment) {
       toast.error('Please select a payment method');
       return;
     }
-    
-    const order = placeOrder();
+
+    const order = await placeOrder();
     if (order) {
-      toast.success('Order placed successfully!', {
-        description: `Order ${order.id} confirmed via ${selectedPayment.toUpperCase()}`,
+      toast.success('Orders placed successfully!', {
+        description: `Order confirmed via ${selectedPayment.toUpperCase()}`,
       });
       navigate('/orders');
     }
@@ -94,11 +174,10 @@ const Cart = () => {
                 <div key={label} className="flex items-center">
                   <div className="flex items-center gap-1 sm:gap-2">
                     <div
-                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold ${
-                        isActive
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-muted-foreground'
-                      }`}
+                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold ${isActive
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground'
+                        }`}
                     >
                       {index + 1}
                     </div>
@@ -183,10 +262,6 @@ const Cart = () => {
                       <span>Subtotal</span>
                       <span>{formatNPR(getTotal())}</span>
                     </div>
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>Pickup Fee</span>
-                      <span className="text-primary font-medium">Free</span>
-                    </div>
                     <div className="h-px bg-border" />
                     <div className="flex justify-between text-lg font-bold">
                       <span>Total</span>
@@ -194,10 +269,17 @@ const Cart = () => {
                     </div>
                   </div>
                   <Button
-                    onClick={() => setStep('location')}
+                    onClick={() => {
+                      if (!user) {
+                        toast.error('Please sign in to continue with checkout');
+                        navigate('/auth', { state: { from: location } });
+                        return;
+                      }
+                      setStep('location');
+                    }}
                     className="w-full btn-gradient-primary h-12 rounded-xl"
                   >
-                    Choose Pickup Location
+                    Set Delivery Address
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -210,42 +292,42 @@ const Cart = () => {
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
+              className="max-w-4xl mx-auto"
             >
               <div className="flex items-center gap-4 mb-6">
                 <Button variant="ghost" onClick={() => setStep('cart')}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back
                 </Button>
-                <h1 className="text-2xl font-bold text-foreground">Choose Pickup Location</h1>
+                <h1 className="text-2xl font-bold text-foreground">Choose Location</h1>
               </div>
 
-              <div className="grid lg:grid-cols-2 gap-8">
-                <div>
-                  <LocationMap
-                    locations={pickupLocations}
-                    selectedLocationId={selectedLocation?.id}
-                    onSelectLocation={setSelectedLocation}
-                    height="500px"
-                  />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground mb-4">Available Locations</h3>
-                  <LocationList
-                    locations={pickupLocations}
-                    selectedLocationId={selectedLocation?.id}
-                    onSelectLocation={setSelectedLocation}
-                  />
-
-                  <Button
-                    onClick={() => setStep('payment')}
-                    disabled={!selectedLocation}
-                    className="w-full btn-gradient-primary h-12 rounded-xl mt-6"
-                  >
-                    Continue to Payment
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </div>
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg text-center">Pin Your Delivery Address</h3>
+                <LocationPicker
+                  selectedLocation={deliveryLocation}
+                  onLocationSelect={(loc) => setDeliveryLocation(loc)}
+                />
               </div>
+
+              <Button
+                onClick={() => {
+                  if (!user) {
+                    toast.error('Please sign in to continue');
+                    navigate('/auth', { state: { from: location } });
+                    return;
+                  }
+                  if (!deliveryLocation) {
+                    toast.error("Please pin your delivery address on the map");
+                    return;
+                  }
+                  setStep('payment');
+                }}
+                className="w-full btn-gradient-primary h-14 rounded-xl text-lg font-bold shadow-lg mt-6"
+              >
+                Continue to Payment
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
             </motion.div>
           )}
 
@@ -272,9 +354,27 @@ const Cart = () => {
 
                 <div className="h-px bg-border" />
 
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-bold text-foreground">Total to Pay</span>
-                  <span className="text-2xl font-bold text-primary">{formatNPR(getTotal())}</span>
+                <div className="flex flex-col gap-2 p-4 bg-primary/5 rounded-xl border border-primary/20">
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Subtotal</span>
+                    <span>{formatNPR(getTotal())}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Delivery Charge</span>
+                    <span className={getTotal() >= 2000 ? "text-success font-bold" : ""}>
+                      {getTotal() >= 2000 ? "FREE" : formatNPR(deliveryCharge)}
+                    </span>
+                  </div>
+                  {getTotal() < 2000 && (
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Free delivery on orders above रु 2,000
+                    </p>
+                  )}
+                  <div className="h-px bg-primary/10 my-1" />
+                  <div className="flex justify-between items-center">
+                    <span className="text-lg font-bold text-foreground">Total to Pay</span>
+                    <span className="text-2xl font-bold text-primary">{formatNPR(getTotal() + deliveryCharge)}</span>
+                  </div>
                 </div>
 
                 <Button
@@ -290,7 +390,7 @@ const Cart = () => {
           )}
 
           {/* Step: Confirm */}
-          {step === 'confirm' && selectedLocation && (
+          {step === 'confirm' && deliveryLocation && (
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -304,7 +404,7 @@ const Cart = () => {
                 <h1 className="text-2xl font-bold text-foreground">Confirm Order</h1>
               </div>
 
-              <div className="card-elevated p-6 space-y-6">
+              <div className="card-elevated p-6 space-y-6 border-2 border-primary/20">
                 {/* Items Summary */}
                 <div>
                   <h3 className="font-semibold text-foreground mb-3">Order Items</h3>
@@ -330,15 +430,14 @@ const Cart = () => {
 
                 <div className="h-px bg-border" />
 
-                {/* Pickup Location */}
+                {/* Delivery Location */}
                 <div>
-                  <h3 className="font-semibold text-foreground mb-3">Pickup Location</h3>
+                  <h3 className="font-semibold text-foreground mb-3">Delivery Address</h3>
                   <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-xl">
                     <MapPin className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-medium text-foreground">{selectedLocation.name}</p>
-                      <p className="text-sm text-muted-foreground">{selectedLocation.address}</p>
-                      <p className="text-sm text-primary mt-1">Open: {selectedLocation.hours}</p>
+                      <p className="font-medium text-foreground">Your Address</p>
+                      <p className="text-sm text-muted-foreground">{deliveryLocation?.address}</p>
                     </div>
                   </div>
                 </div>
@@ -349,13 +448,12 @@ const Cart = () => {
                 <div>
                   <h3 className="font-semibold text-foreground mb-3">Payment Method</h3>
                   <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      selectedPayment === 'esewa' ? 'bg-green-500' :
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${selectedPayment === 'esewa' ? 'bg-green-500' :
                       selectedPayment === 'khalti' ? 'bg-purple-500' : 'bg-blue-500'
-                    }`}>
+                      }`}>
                       <span className="text-white text-lg">
                         {selectedPayment === 'esewa' ? '🟢' :
-                         selectedPayment === 'khalti' ? '🟣' : '💳'}
+                          selectedPayment === 'khalti' ? '🟣' : '💳'}
                       </span>
                     </div>
                     <div>
@@ -364,7 +462,7 @@ const Cart = () => {
                       </p>
                       <p className="text-sm text-muted-foreground">
                         {selectedPayment === 'esewa' ? 'eSewa wallet' :
-                         selectedPayment === 'khalti' ? 'Khalti wallet' : 'Visa, Mastercard, etc.'}
+                          selectedPayment === 'khalti' ? 'Khalti wallet' : 'Visa, Mastercard, etc.'}
                       </p>
                     </div>
                   </div>
@@ -373,16 +471,29 @@ const Cart = () => {
                 <div className="h-px bg-border" />
 
                 {/* Total */}
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-bold text-foreground">Total</span>
-                  <span className="text-2xl font-bold text-primary">{formatNPR(getTotal())}</span>
+                <div className="flex flex-col gap-2 p-4 bg-primary/5 rounded-xl border border-primary/20 mb-2">
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Subtotal</span>
+                    <span>{formatNPR(getTotal())}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Delivery Charge</span>
+                    <span className={getTotal() >= 2000 ? "text-success font-bold" : ""}>
+                      {getTotal() >= 2000 ? 'FREE' : formatNPR(deliveryCharge)}
+                    </span>
+                  </div>
+                  <div className="h-px bg-primary/10 my-1" />
+                  <div className="flex justify-between items-center">
+                    <span className="text-lg font-bold text-foreground">Grand Total</span>
+                    <span className="text-2xl font-bold text-primary">{formatNPR(getTotal() + (getTotal() >= 2000 ? 0 : deliveryCharge))}</span>
+                  </div>
                 </div>
 
                 <Button
                   onClick={handlePlaceOrder}
                   className="w-full btn-gradient-secondary h-14 rounded-xl text-lg"
                 >
-                  Pay {formatNPR(getTotal())}
+                  Pay {formatNPR(getTotal() + deliveryCharge)}
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </div>

@@ -1,10 +1,14 @@
+import { SEO } from '@/components/SEO';
+import { LocationSearch } from '@/components/LocationSearch';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, MapPin, Clock, ShoppingBag, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
-import { products, pickupLocations } from '@/data/mockData';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/services/api';
+import { ProductSkeleton } from '@/components/ProductSkeleton';
 
 // AnimatedText component: word-by-word animation
 const AnimatedText = ({ text }: { text: string }) => {
@@ -53,6 +57,7 @@ const AnimatedProductCard = ({ product, index }: any) => {
       <img
         src={product.image}
         alt={product.name}
+        loading="lazy"
         className="w-full h-48 object-cover"
       />
       <div className="p-4">
@@ -65,10 +70,31 @@ const AnimatedProductCard = ({ product, index }: any) => {
 };
 
 const Index = () => {
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      const res = await api.get('/products');
+      return res.data.map((p: any) => ({
+        id: p._id,
+        name: p.name,
+        description: p.description,
+        price: p.price,
+        image: p.image,
+        category: p.category,
+        stock: p.stock
+      }));
+    }
+  });
+
   const featuredProducts = products.slice(0, 4);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO
+        title="Daru Hunting | Premium Spirits & Adventure Delivered"
+        description="Experience elite liquor delivery in Kathmandu. Premium whiskeys, wines, and local treasures delivered safely to your doorstep in 30 minutes. Join the hunt for perfection."
+        keywords="daru delivery kathmandu, online liquor store nepal, whiskey home delivery, wine shop kathmandu, rapid alcohol delivery"
+      />
       <Navbar />
 
       {/* Hero Section */}
@@ -82,13 +108,13 @@ const Index = () => {
               transition={{ duration: 0.6 }}
             >
               <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary font-medium text-sm mb-6">
-                <MapPin className="w-4 h-4" />
-                Self-pickup made simple
+                <Truck className="w-4 h-4" />
+                Rapid Doorstep Delivery
               </span>
 
               {/* Hero Title */}
               <h1 className="hero-title text-foreground mb-6 text-4xl lg:text-5xl font-bold">
-                <AnimatedText text="Order Online, Pick Up Your Way" />
+                <AnimatedText text="Premium Spirits Hunted & Delivered To You" />
               </h1>
 
               {/* Hero Subtitle */}
@@ -98,7 +124,7 @@ const Index = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6, duration: 0.6 }}
               >
-                Premium spirits, fine wines, and tobacco products ready for pickup. Order ahead and collect at your convenience — no lines, no waiting.
+                The hunt for perfection ends here. Discover elite whiskeys, wines, and local treasures from our curated cellar, delivered safely to Kathmandu's finest homes.
               </motion.p>
 
               {/* Buttons */}
@@ -120,6 +146,27 @@ const Index = () => {
                   </Button>
                 </Link>
               </motion.div>
+
+              <motion.div
+                className="mt-8 max-w-md"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1, duration: 0.6 }}
+              >
+                <p className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-primary" />
+                  Check delivery availability
+                </p>
+                <LocationSearch
+                  onSelect={(lat, lng, address) => {
+                    localStorage.setItem('userLocation', JSON.stringify({ lat, lng, address }));
+                    window.dispatchEvent(new CustomEvent('location-changed', {
+                      detail: { lat, lng, address }
+                    }));
+                  }}
+                  placeholder="Where should we deliver?"
+                />
+              </motion.div>
             </motion.div>
 
             {/* Hero Image */}
@@ -131,9 +178,9 @@ const Index = () => {
             >
               <div className="relative rounded-3xl overflow-hidden shadow-2xl">
                 <img
-                  src="https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=800&h=600&fit=crop"
-                  alt="Premium spirits collection"
-                  className="w-full h-[400px] lg:h-[500px] object-cover"
+                  src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=1000&h=800&fit=crop"
+                  alt="Elite spirits selection"
+                  className="w-full h-[450px] lg:h-[600px] object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-foreground/40 to-transparent" />
               </div>
@@ -147,11 +194,11 @@ const Index = () => {
               >
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <Clock className="w-6 h-6 text-primary" />
+                    <Truck className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <p className="font-bold text-foreground">Ready in 30 min</p>
-                    <p className="text-sm text-muted-foreground">Average prep time</p>
+                    <p className="font-bold text-foreground">Delivery in 30 min</p>
+                    <p className="text-sm text-muted-foreground">Across Kathmandu Valley</p>
                   </div>
                 </div>
               </motion.div>
@@ -191,18 +238,18 @@ const Index = () => {
             {[
               {
                 icon: ShoppingBag,
-                title: 'Browse & Order',
-                description: 'Choose from our selection of premium spirits, wines, and tobacco products.',
+                title: 'Curate Your Order',
+                description: 'Explore our curated catalog of elite beverages and add them to your cart.',
               },
               {
                 icon: MapPin,
-                title: 'Select Location',
-                description: 'Pick your nearest pickup point from our network of licensed stores.',
+                title: 'Set Delivery Point',
+                description: 'Pin your exact location on our map so our riders can find you quickly.',
               },
               {
                 icon: Truck,
-                title: 'Pick Up',
-                description: 'Show your ID, collect your order. No waiting, no delivery fees.',
+                title: 'Real-time Tracking',
+                description: 'Sit back and relax. Track your order live as it makes its way to you.',
               },
             ].map((step, index) => (
               <motion.div
@@ -226,6 +273,8 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+
 
       {/* Featured Products */}
       <section className="py-20">
@@ -253,70 +302,12 @@ const Index = () => {
           </motion.div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredProducts.map((product, index) => (
+            {isLoading ? (
+              [...Array(4)].map((_, i) => <ProductSkeleton key={i} />)
+            ) : featuredProducts.map((product: any, index: number) => (
               <AnimatedProductCard key={product.id} product={product} index={index} />
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Pickup Locations Preview */}
-      <section className="py-20 bg-muted/30">
-        <div className="section-container">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-10"
-          >
-            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-              Pickup Locations
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-8">
-              {pickupLocations.length} convenient locations across the city
-            </p>
-          </motion.div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {pickupLocations.slice(0, 3).map((location, index) => (
-              <motion.div
-                key={location.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="card-elevated p-6"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <MapPin className="w-6 h-6 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-foreground mb-1">{location.name}</h3>
-                    <p className="text-sm text-muted-foreground mb-2">{location.address}</p>
-                    <div className="flex items-center gap-1 text-sm text-primary">
-                      <Clock className="w-3 h-3" />
-                      <span>{location.hours}</span>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-center mt-8"
-          >
-            <Link to="/cart">
-              <Button className="btn-gradient-primary rounded-xl">
-                View All Locations in Cart
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
-          </motion.div>
         </div>
       </section>
 

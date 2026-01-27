@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 @layer base {
   :root {
@@ -42,7 +42,7 @@
     /* Custom tokens */
     --success: 152 69% 40%;
     --success-foreground: 0 0% 100%;
-    
+
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
@@ -53,7 +53,7 @@
     --gradient-hero: linear-gradient(135deg, hsl(162 72% 32%) 0%, hsl(172 66% 40%) 100%);
     --gradient-warm: linear-gradient(135deg, hsl(16 85% 60%) 0%, hsl(35 90% 55%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(45 30% 98%) 100%);
-    
+
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 hsl(220 25% 12% / 0.05);
     --shadow-md: 0 4px 6px -1px hsl(220 25% 12% / 0.08), 0 2px 4px -2px hsl(220 25% 12% / 0.05);
@@ -121,7 +121,12 @@
     font-family: 'Plus Jakarta Sans', sans-serif;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-bold tracking-tight;
   }
 }
@@ -206,8 +211,15 @@
   }
 
   @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
+
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+
+    50% {
+      transform: translateY(-10px);
+    }
   }
 
   .animate-pulse-soft {
@@ -215,21 +227,53 @@
   }
 
   @keyframes pulse-soft {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.7;
+    }
   }
 }
 
 /* Leaflet overrides */
 .leaflet-container {
-  @apply rounded-xl z-0;
+  @apply rounded-3xl z-0;
   font-family: 'Plus Jakarta Sans', sans-serif;
+  filter: grayscale(0.2) contrast(1.1); /* Subtle premium filter */
 }
 
 .leaflet-popup-content-wrapper {
-  @apply rounded-xl shadow-[var(--shadow-lg)] border border-border/50;
+  @apply rounded-2xl shadow-[var(--shadow-xl)] border-0 p-0 overflow-hidden bg-background/95 backdrop-blur-md;
 }
 
 .leaflet-popup-content {
-  @apply m-0 p-4;
+  @apply m-0 p-4 leading-relaxed font-sans;
+}
+
+.leaflet-popup-tip {
+  @apply bg-background/95;
+}
+
+.leaflet-control-zoom {
+  @apply border-0 shadow-lg rounded-xl overflow-hidden !m-4;
+}
+
+.leaflet-control-zoom-in, .leaflet-control-zoom-out {
+  @apply !bg-white !text-primary !border-0 !w-10 !h-10 !flex !items-center !justify-center hover:!bg-gray-50 transition-colors !font-black !text-lg;
+}
+
+.leaflet-bar {
+  @apply border-0 !shadow-none;
+}
+
+.leaflet-attribution-flag {
+   display: none !important;
+}
+
+.leaflet-control-attribution {
+  @apply !bg-background/40 !backdrop-blur-sm !px-2 !py-0.5 !rounded-tl-lg !text-[10px] !text-muted-foreground/60;
 }
