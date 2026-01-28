@@ -47,59 +47,6 @@ const PageLoader = () => (
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-<<<<<<< HEAD
-      <TooltipProvider>
-        <Toaster />
-        <Sonner position="top-center" />
-        <AgeVerification />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/product/:id" element={<ProductDetails />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route
-              path="/orders"
-              element={
-                <ProtectedRoute>
-                  <Orders />
-                </ProtectedRoute>
-              }
-            />
-            
-            {/* Vendor Routes - Protected */}
-            <Route
-              path="/vendor"
-              element={
-                <ProtectedRoute>
-                  <VendorDashboard />
-                </ProtectedRoute>
-              }
-            />
-            
-            {/* Admin Routes - Protected */}
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute requireAdmin>
-                  <AdminLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<AdminDashboard />} />
-              <Route path="products" element={<AdminProducts />} />
-              <Route path="orders" element={<AdminOrders />} />
-              <Route path="locations" element={<AdminLocations />} />
-              <Route path="inventory" element={<AdminInventory />} />
-            </Route>
-            
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-=======
       <SocketProvider>
         <TooltipProvider>
           <Toaster />
@@ -119,6 +66,16 @@ const App = () => (
                   element={
                     <ProtectedRoute>
                       <Orders />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Vendor Routes - Protected */}
+                <Route
+                  path="/vendor"
+                  element={
+                    <ProtectedRoute>
+                      <VendorDashboard />
                     </ProtectedRoute>
                   }
                 />
@@ -146,7 +103,6 @@ const App = () => (
           </BrowserRouter>
         </TooltipProvider>
       </SocketProvider>
->>>>>>> 27b4582 (Improved oAuth)
     </AuthProvider>
   </QueryClientProvider>
 );

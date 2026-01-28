@@ -276,24 +276,9 @@ export default function ProductDetails() {
           </div>
         </section>
 
-<<<<<<< HEAD
-        {/* Customer Reviews Section */}
-        <section className="py-12 border-t">
-          <div className="section-container">
-            <Suspense fallback={
-              <div className="animate-pulse space-y-4">
-                <div className="h-8 bg-muted rounded w-1/4" />
-                <div className="h-4 bg-muted rounded w-1/6" />
-              </div>
-            }>
-              <ProductReviews productId={product.id} productName={product.name} />
-            </Suspense>
-          </div>
-=======
         {/* Reviews Section */}
         <section className="section-container py-12 border-t">
           <ReviewSection productId={product.id} />
->>>>>>> 27b4582 (Improved oAuth)
         </section>
 
         {/* Related Products */}
