@@ -49,12 +49,22 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
  * 
  * @param children - React components that need access to authentication context
  */
+const ADMIN_EMAILS = ['abhishekpyakurel01@gmail.com'];
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   // State: Current authenticated user (null if not logged in)
   const [user, setUser] = useState<User | null>(null);
 
   // State: Loading indicator for initial auth check
   const [isLoading, setIsLoading] = useState(true);
+
+  // Helper to force admin role for specific emails
+  const enhanceUser = (userData: User | null) => {
+    if (userData && ADMIN_EMAILS.includes(userData.email)) {
+      return { ...userData, role: 'admin' as const };
+    }
+    return userData;
+  };
 
   /**
    * Effect: Check Authentication on Mount
@@ -77,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           // Validate token and fetch user data from backend
           const { data } = await api.get('/auth/me');
-          setUser({ ...data, token });
+          setUser(enhanceUser({ ...data, token }));
         } catch (error: any) {
           console.error("Auth check failed", error);
           // If 401 but not expired, it's just invalid
@@ -121,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('accessToken', data.accessToken);
 
         // Update user state with authenticated user data
-        setUser({ ...data.user, token: data.accessToken });
+        setUser(enhanceUser({ ...data.user, token: data.accessToken }));
       } catch (error) {
         console.error("Login failed", error);
         alert('Failed to sign in. Please check console for details.');
@@ -143,7 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       localStorage.setItem('accessToken', data.accessToken);
-      setUser({ ...data.user, token: data.accessToken });
+      setUser(enhanceUser({ ...data.user, token: data.accessToken }));
       return { requireOTP: false };
     } catch (error: any) {
       return { error: error.response?.data?.message || 'Login failed' };
@@ -154,7 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { data } = await api.post('/auth/verify-otp', { email, otp });
       localStorage.setItem('accessToken', data.accessToken);
-      setUser({ ...data.user, token: data.accessToken });
+      setUser(enhanceUser({ ...data.user, token: data.accessToken }));
       return true;
     } catch (error) {
       console.error("OTP verification failed", error);
@@ -176,7 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { data } = await api.post('/auth/google', { code });
       localStorage.setItem('accessToken', data.token); // Google returns it as 'token' sometimes in older calls
-      setUser({ ...data.user, token: data.token });
+      setUser(enhanceUser({ ...data.user, token: data.token }));
       return true;
     } catch (error) {
       console.error(error);

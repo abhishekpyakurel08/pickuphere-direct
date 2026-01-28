@@ -7,6 +7,8 @@ import { LocateFixed } from 'lucide-react';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 import api from '@/services/api';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 // Fix Leaflet default icon issue in React
 let DefaultIcon = L.icon({
@@ -17,8 +19,14 @@ let DefaultIcon = L.icon({
 L.Marker.prototype.options.icon = DefaultIcon;
 
 interface LocationPickerProps {
-    onLocationSelect: (location: { address: string; lat: number; lng: number }) => void;
-    selectedLocation?: { address: string; lat: number; lng: number } | null;
+    onLocationSelect: (location: { address: string; lat: number; lng: number; area?: string }) => void;
+    selectedLocation?: { address: string; lat: number; lng: number; area?: string } | null;
+}
+
+interface Area {
+    _id: string;
+    name: string;
+    description?: string;
 }
 
 const LocationMarker = ({ setLocation, position, setPosition }: { setLocation: (vals: any) => void, position: L.LatLng | null, setPosition: (p: any) => void }) => {
@@ -69,17 +77,36 @@ export function LocationPicker({ onLocationSelect, selectedLocation }: LocationP
     const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(selectedLocation ? { lat: selectedLocation.lat, lng: selectedLocation.lng } : null);
     const [markerPos, setMarkerPos] = useState<L.LatLng | null>(selectedLocation ? L.latLng(selectedLocation.lat, selectedLocation.lng) : null);
     const [map, setMap] = useState<L.Map | null>(null);
+    const [areas, setAreas] = useState<Area[]>([]);
+    const [selectedArea, setSelectedArea] = useState<string | undefined>(selectedLocation?.area);
+
+    useEffect(() => {
+        // Fetch areas
+        const fetchAreas = async () => {
+            try {
+                const res = await api.get('/location/areas');
+                setAreas(res.data);
+            } catch (err) {
+                console.error("Failed to fetch areas", err);
+            }
+        };
+        fetchAreas();
+    }, []);
 
     useEffect(() => {
         if (coords) {
             api.get(`/location/reverse?lat=${coords.lat}&lng=${coords.lng}`)
                 .then(res => {
                     setAddress(res.data.address);
-                    onLocationSelect({ address: res.data.address, ...coords });
+                    onLocationSelect({
+                        address: res.data.address,
+                        ...coords,
+                        area: selectedArea
+                    });
                 })
                 .catch(err => console.error(err));
         }
-    }, [coords, onLocationSelect]);
+    }, [coords, selectedArea]); // Removed onLocationSelect from dependencies to avoid loop if parent callback is not stable
 
     const handleLocateMe = () => {
         if (map) {
@@ -87,8 +114,39 @@ export function LocationPicker({ onLocationSelect, selectedLocation }: LocationP
         }
     };
 
+    const handleAreaChange = (areaId: string) => {
+        setSelectedArea(areaId);
+        // If we have coords, update the location with the new area immediately
+        if (coords && address) {
+            onLocationSelect({
+                address,
+                ...coords,
+                area: areaId
+            });
+        }
+    };
+
     return (
         <div className="space-y-4">
+            <div className="space-y-2">
+                <Label htmlFor="area-select">Delivery Area</Label>
+                <Select value={selectedArea} onValueChange={handleAreaChange}>
+                    <SelectTrigger id="area-select" className="w-full bg-background">
+                        <SelectValue placeholder="Select your delivery area" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {areas.map((area) => (
+                            <SelectItem key={area._id} value={area._id}>
+                                {area.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                    Please select your area to ensure delivery availability.
+                </p>
+            </div>
+
             <div className="h-[450px] w-full rounded-3xl overflow-hidden border-4 border-muted shadow-2xl relative">
                 <MapContainer
                     center={[27.7172, 85.3240]}
@@ -128,6 +186,11 @@ export function LocationPicker({ onLocationSelect, selectedLocation }: LocationP
                         <p className="text-sm font-bold text-foreground leading-relaxed">
                             {address}
                         </p>
+                        {selectedArea && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                                Area: {areas.find(a => a._id === selectedArea)?.name}
+                            </p>
+                        )}
                     </div>
                 </motion.div>
             )}

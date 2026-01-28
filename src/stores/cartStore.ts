@@ -24,7 +24,7 @@ export interface Order {
   items: CartItem[];
   total: number;
   orderType: 'DELIVERY';
-  deliveryLocation: { address: string; lat: number; lng: number };
+  deliveryLocation: { address: string; lat: number; lng: number; area?: string };
   status: OrderStatus;
   createdAt: Date;
 }
@@ -36,9 +36,9 @@ interface CartStore {
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
-  deliveryLocation: { address: string; lat: number; lng: number } | null;
+  deliveryLocation: { address: string; lat: number; lng: number; area?: string } | null;
   deliveryCharge: number;
-  setDeliveryLocation: (location: { address: string; lat: number; lng: number } | null) => void;
+  setDeliveryLocation: (location: { address: string; lat: number; lng: number; area?: string } | null) => void;
   setDeliveryCharge: (charge: number) => void;
   getTotal: () => number;
   getItemCount: () => number;
