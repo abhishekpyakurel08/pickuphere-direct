@@ -11,6 +11,7 @@ const api = axios.create({
 });
 
 // Add a request interceptor to attach the Access Token
+// Response interceptor for automatic token refresh
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
@@ -24,23 +25,50 @@ api.interceptors.request.use(
     }
 );
 
-// Response interceptor for automatic token refresh
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
 
-        // Mock Mode Fallback for Admin Routes
-        // If the backend rejects admin access (403/401/404/500/Network), fall back to mock data
-        if (originalRequest.url?.includes('/admin/') || originalRequest.url?.includes('/products')) {
+        // Mock Mode Fallback for Admin/Vendor Routes
+        if (originalRequest.url?.includes('/admin/') || originalRequest.url?.includes('/products') || originalRequest.url?.includes('/vendor/')) {
             console.warn(`[MockMode] API failed for ${originalRequest.url}, falling back to mock data.`);
             const { MOCK_STATS, MOCK_USERS, MOCK_ORDERS, MOCK_PRODUCTS, MOCK_EXPENSES, MOCK_USER_ORDERS } = await import('./mockData');
 
-            // Artificial delay to simulate network
+            // Artificial delay
             await new Promise(resolve => setTimeout(resolve, 500));
 
-            if (originalRequest.url.includes('/stats')) return { data: MOCK_STATS, status: 200 };
+            // Vendor/Admin Stats
+            if (originalRequest.url.includes('/stats')) {
+                return {
+                    data: {
+                        totalProducts: MOCK_PRODUCTS.length,
+                        activeProducts: MOCK_PRODUCTS.filter(p => p.approved).length,
+                        pendingProducts: MOCK_PRODUCTS.filter(p => !p.approved).length,
+                        totalSales: 45,
+                        totalRevenue: MOCK_STATS.totalRevenue,
+                        commission: 3
+                    },
+                    status: 200
+                };
+            }
+
             if (originalRequest.url.includes('/users') && !originalRequest.url.includes('/orders')) return { data: MOCK_USERS, status: 200 };
+
+            // Vendor Products
+            if (originalRequest.url.includes('/vendor/products')) {
+                return {
+                    data: {
+                        products: MOCK_PRODUCTS.map(p => ({
+                            id: p._id,
+                            ...p,
+                            status: p.approved ? 'active' : 'pending'
+                        }))
+                    },
+                    status: 200
+                };
+            }
+
             if (originalRequest.url.includes('/orders') && !originalRequest.url.includes('/users')) return { data: MOCK_ORDERS, status: 200 };
             if (originalRequest.url.includes('/products')) return { data: MOCK_PRODUCTS, status: 200 };
             if (originalRequest.url.includes('/expenses')) return { data: MOCK_EXPENSES, status: 200 };
@@ -72,7 +100,6 @@ api.interceptors.response.use(
 
                 return api(originalRequest);
             } catch (refreshError) {
-                // If refresh fails, clear tokens and redirect to login
                 localStorage.removeItem('accessToken');
                 localStorage.removeItem('token');
                 window.location.href = '/auth';
@@ -83,5 +110,61 @@ api.interceptors.response.use(
         return Promise.reject(error);
     }
 );
+
+export const getAuthToken = () => localStorage.getItem('accessToken') || localStorage.getItem('token');
+
+export interface ProductData {
+    id?: string;
+    _id?: string;
+    name: string;
+    description: string;
+    price: number;
+    category: string;
+    stock: number;
+    image?: string;
+    status?: 'active' | 'pending' | 'rejected';
+    approved?: boolean;
+    averageRating?: number;
+}
+
+export const productsApi = {
+    getAll: async () => {
+        const res = await api.get('/products');
+        return res.data;
+    },
+    getOne: async (id: string) => {
+        const res = await api.get(`/products/${id}`);
+        return res.data;
+    },
+    create: async (data: any) => {
+        const res = await api.post('/products', data);
+        return res.data;
+    },
+    createWithImage: async (formData: FormData) => {
+        const res = await api.post('/products/with-image', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return res.data;
+    },
+    update: async (id: string, data: any) => {
+        const res = await api.put(`/products/${id}`, data);
+        return res.data;
+    },
+    delete: async (id: string) => {
+        const res = await api.delete(`/products/${id}`);
+        return res.data;
+    }
+};
+
+export const vendorApi = {
+    getStats: async () => {
+        const res = await api.get('/vendor/stats');
+        return res.data;
+    },
+    getProducts: async () => {
+        const res = await api.get('/vendor/products');
+        return res.data;
+    }
+};
 
 export default api;
